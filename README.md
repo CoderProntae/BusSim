@@ -79,7 +79,8 @@ Beklenen davranış:
     ├── 14_FAZ1_CAMERA_CONTROLLER.md
     ├── 15_FAZ1_ORIENTATION_SQUARE.md
     ├── 16_FAZ1_SEPARATED_CAMERA_INPUT.md
-    └── 17_FAZ1_DEBUG_OVERLAY.md
+    ├── 17_FAZ1_DEBUG_OVERLAY.md
+    └── 18_FAZ1_OVERLAY_ORIENTATION_FIX.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -113,7 +114,7 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay yön/konum düzeltmesi. Sıradaki parçalar:
 
 1. Basit 3D otobüs/yol debug sahnesi.
 2. Asset/mesh veri formatı hazırlığı.

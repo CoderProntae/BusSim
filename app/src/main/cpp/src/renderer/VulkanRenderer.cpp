@@ -143,11 +143,21 @@ void appendOverlayQuad(std::vector<DebugVertex>& vertices,
                        float maxY,
                        float z,
                        const std::array<float, 3>& color) {
+    // The shared world pipeline uses a Vulkan-oriented viewport/projection path.
+    // For the overlay API below, callers pass logical screen-space coordinates
+    // where negative X is left and positive Y is top. Convert them to the actual
+    // NDC orientation consumed by the current pipeline so the panel appears in
+    // the expected top-left corner and text is upright on device.
+    const float actualMinX = -maxX;
+    const float actualMaxX = -minX;
+    const float actualMinY = -maxY;
+    const float actualMaxY = -minY;
+
     const uint16_t base = static_cast<uint16_t>(vertices.size());
-    vertices.push_back(DebugVertex{{ minX, minY, z }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ maxX, minY, z }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ maxX, maxY, z }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ minX, maxY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ actualMinX, actualMinY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ actualMaxX, actualMinY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ actualMaxX, actualMaxY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ actualMinX, actualMaxY, z }, { color[0], color[1], color[2] }});
     indices.push_back(base);
     indices.push_back(static_cast<uint16_t>(base + 1));
     indices.push_back(static_cast<uint16_t>(base + 2));
