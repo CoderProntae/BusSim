@@ -219,6 +219,13 @@ void VulkanRenderer::setDebugRoadTransform(const math::Transform& transform) {
     debugRoadTransform_ = transform;
 }
 
+void VulkanRenderer::setDebugCamera(const math::Vec3& eye, const math::Vec3& target, const math::Vec3& up, float fovYRadians) {
+    debugCameraEye_ = eye;
+    debugCameraTarget_ = target;
+    debugCameraUp_ = up;
+    debugCameraFovYRadians_ = fovYRadians;
+}
+
 void VulkanRenderer::tick(float deltaSeconds) {
     touchPulseSeconds_ = std::max(0.0F, touchPulseSeconds_ - deltaSeconds);
     debugInputHoldSeconds_ = std::max(0.0F, debugInputHoldSeconds_ - deltaSeconds);
@@ -1009,8 +1016,8 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         const float aspect = swapchainExtent_.height > 0
             ? static_cast<float>(swapchainExtent_.width) / static_cast<float>(swapchainExtent_.height)
             : 1.0F;
-        const math::Mat4 projection = math::perspectiveVulkanLH(60.0F * 0.01745329252F, aspect, 0.1F, 100.0F);
-        const math::Mat4 view = math::lookAtLH({0.0F, 1.65F, -4.25F}, {0.0F, 0.0F, 3.4F}, {0.0F, 1.0F, 0.0F});
+        const math::Mat4 projection = math::perspectiveVulkanLH(debugCameraFovYRadians_, aspect, 0.1F, 100.0F);
+        const math::Mat4 view = math::lookAtLH(debugCameraEye_, debugCameraTarget_, debugCameraUp_);
 
         const math::Mat4 model = math::transformToMat4(debugRoadTransform_);
         const math::Mat4 viewProjection = math::multiply(projection, view);

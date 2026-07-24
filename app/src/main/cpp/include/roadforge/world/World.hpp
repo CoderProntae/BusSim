@@ -33,6 +33,20 @@ struct MeshComponent final {
     bool visible = true;
 };
 
+struct CameraControlInput final {
+    float steering = 0.0F;
+    float throttle = 0.0F;
+    float brake = 0.0F;
+    bool active = false;
+};
+
+struct DebugCamera final {
+    math::Vec3 eye{ 0.0F, 1.65F, -4.25F };
+    math::Vec3 target{ 0.0F, 0.0F, 3.4F };
+    math::Vec3 up{ 0.0F, 1.0F, 0.0F };
+    float fovYRadians = 60.0F * 0.01745329252F;
+};
+
 /**
  * Minimal sparse-slot world used as the bridge toward the future ECS.
  *
@@ -58,10 +72,11 @@ public:
     [[nodiscard]] const MeshComponent* mesh(Entity entity) const;
 
     Entity createDebugRoadEntity();
-    void fixedUpdate(double fixedDeltaSeconds);
+    void fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& cameraInput = {});
 
     [[nodiscard]] const math::Transform& debugRoadTransform() const { return debugRoadTransformCache_; }
     [[nodiscard]] Entity debugRoadEntity() const { return debugRoadEntity_; }
+    [[nodiscard]] const DebugCamera& debugCamera() const { return debugCamera_; }
 
 private:
     struct Slot final {
@@ -78,6 +93,10 @@ private:
 
     Entity debugRoadEntity_{};
     math::Transform debugRoadTransformCache_{};
+    DebugCamera debugCamera_{};
+    float cameraOrbitYawRadians_ = 0.0F;
+    float cameraDistance_ = 7.65F;
+    float cameraHeight_ = 1.65F;
     double simulationSeconds_ = 0.0;
 };
 

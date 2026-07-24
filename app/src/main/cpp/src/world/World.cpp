@@ -12,6 +12,10 @@ void World::reset() {
     meshes_.clear();
     debugRoadEntity_ = {};
     debugRoadTransformCache_ = {};
+    debugCamera_ = {};
+    cameraOrbitYawRadians_ = 0.0F;
+    cameraDistance_ = 7.65F;
+    cameraHeight_ = 1.65F;
     simulationSeconds_ = 0.0;
 }
 
@@ -112,8 +116,25 @@ Entity World::createDebugRoadEntity() {
     return debugRoadEntity_;
 }
 
-void World::fixedUpdate(double fixedDeltaSeconds) {
-    simulationSeconds_ += std::clamp(fixedDeltaSeconds, 0.0, 0.1);
+void World::fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& cameraInput) {
+    const double safeDelta = std::clamp(fixedDeltaSeconds, 0.0, 0.1);
+    simulationSeconds_ += safeDelta;
+
+    if (cameraInput.active) {
+        const float dt = static_cast<float>(safeDelta);
+        cameraOrbitYawRadians_ += cameraInput.steering * dt * 1.15F;
+        cameraDistance_ += (cameraInput.brake - cameraInput.throttle) * dt * 3.5F;
+        cameraDistance_ = std::clamp(cameraDistance_, 3.25F, 10.5F);
+    }
+
+    debugCamera_.target = { 0.0F, 0.0F, 3.4F };
+    debugCamera_.up = { 0.0F, 1.0F, 0.0F };
+    debugCamera_.fovYRadians = 60.0F * 0.01745329252F;
+    debugCamera_.eye = {
+        std::sin(cameraOrbitYawRadians_) * cameraDistance_,
+        cameraHeight_,
+        debugCamera_.target.z - (std::cos(cameraOrbitYawRadians_) * cameraDistance_),
+    };
 
     TransformComponent* roadTransform = transform(debugRoadEntity_);
     if (roadTransform == nullptr) {

@@ -31,6 +31,7 @@ public:
     void setInputDebug(float steering, float throttle, float brake, bool touchActive);
     void setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha);
     void setDebugRoadTransform(const math::Transform& transform);
+    void setDebugCamera(const math::Vec3& eye, const math::Vec3& target, const math::Vec3& up, float fovYRadians);
     void tick(float deltaSeconds);
     void drawFrame();
 
@@ -103,6 +104,10 @@ private:
     float debugInputHoldSeconds_ = 0.0F;
     bool debugTouchActive_ = false;
     math::Transform debugRoadTransform_{};
+    math::Vec3 debugCameraEye_{ 0.0F, 1.65F, -4.25F };
+    math::Vec3 debugCameraTarget_{ 0.0F, 0.0F, 3.4F };
+    math::Vec3 debugCameraUp_{ 0.0F, 1.0F, 0.0F };
+    float debugCameraFovYRadians_ = 60.0F * 0.01745329252F;
 
     ANativeWindow* window_ = nullptr;
 

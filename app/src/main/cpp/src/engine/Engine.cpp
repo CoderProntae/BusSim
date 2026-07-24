@@ -111,9 +111,17 @@ void Engine::frame(int64_t frameTimeNanos) {
     previousFrameTimeNanos_ = frameTimeNanos;
     appTimeSeconds_ += deltaSeconds;
 
+    const input::InputSnapshot& input = inputSystem_.snapshot();
+    const world::CameraControlInput cameraInput{
+        input.steering,
+        input.throttle,
+        input.brake,
+        input.primaryTouchDown,
+    };
+
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
     for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
-        world_.fixedUpdate(simulationStep.fixedDeltaSeconds);
+        world_.fixedUpdate(simulationStep.fixedDeltaSeconds, cameraInput);
         ++fixedUpdateCounter_;
     }
 
@@ -132,10 +140,11 @@ void Engine::frame(int64_t frameTimeNanos) {
                 static_cast<unsigned long long>(stats.droppedTimeEvents));
     }
 
-    const input::InputSnapshot& input = inputSystem_.snapshot();
     renderer_.setInputDebug(input.steering, input.throttle, input.brake, input.primaryTouchDown);
     renderer_.setSimulationTiming(appTimeSeconds_, fixedUpdateCounter_, simulationStep.interpolationAlpha);
     renderer_.setDebugRoadTransform(world_.debugRoadTransform());
+    const world::DebugCamera& camera = world_.debugCamera();
+    renderer_.setDebugCamera(camera.eye, camera.target, camera.up, camera.fovYRadians);
     renderer_.tick(static_cast<float>(deltaSeconds));
     renderer_.drawFrame();
 }
