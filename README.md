@@ -72,7 +72,8 @@ Beklenen davranış:
     ├── 07_FAZ1_VERTEX_INDEX_MESH.md
     ├── 08_FAZ1_VISIBLE_INPUT_FEEDBACK.md
     ├── 09_FAZ1_INPUT_DIAGNOSTIC_COLORS.md
-    └── 10_FAZ1_DEPTH_CAMERA.md
+    ├── 10_FAZ1_DEPTH_CAMERA.md
+    └── 11_FAZ1_TRANSFORM_FRUSTUM.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -106,10 +107,10 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer ve perspektif kamera/MVP hattı. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat ve frustum culling math temeli. Sıradaki parçalar:
 
 1. Renderer buffer/resource kodunu temiz abstraction katmanına ayırmak.
-2. `Quat`, `Transform` ve frustum math tiplerini eklemek.
-3. ECS/world iskeleti.
-4. Kamera kontrolü ve debug overlay.
-5. Basit 3D otobüs/yol debug sahnesi.
+2. ECS/world iskeleti.
+3. Kamera kontrolü ve debug overlay.
+4. Basit 3D otobüs/yol debug sahnesi.
+5. Asset/mesh veri formatı hazırlığı.

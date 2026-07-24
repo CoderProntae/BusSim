@@ -1,7 +1,9 @@
 #include "roadforge/renderer/VulkanRenderer.hpp"
 
 #include "roadforge/core/Log.hpp"
+#include "roadforge/math/Frustum.hpp"
 #include "roadforge/math/Mat4.hpp"
+#include "roadforge/math/Transform.hpp"
 #include "roadforge/math/Vec.hpp"
 #include "roadforge/renderer/GeneratedShaders.hpp"
 
@@ -1041,10 +1043,22 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
             : 1.0F;
         const math::Mat4 projection = math::perspectiveVulkanLH(60.0F * 0.01745329252F, aspect, 0.1F, 100.0F);
         const math::Mat4 view = math::lookAtLH({0.0F, 1.65F, -4.25F}, {0.0F, 0.0F, 3.4F}, {0.0F, 1.0F, 0.0F});
-        const math::Mat4 model = math::identity();
-        const math::Mat4 mvp = math::multiply(projection, math::multiply(view, model));
+
+        math::Transform roadTransform{};
+        roadTransform.rotation = math::quatFromAxisAngle({0.0F, 1.0F, 0.0F}, std::sin(static_cast<float>(appTimeSeconds_) * 0.65F) * 0.025F);
+        const math::Mat4 model = math::transformToMat4(roadTransform);
+        const math::Mat4 viewProjection = math::multiply(projection, view);
+        const math::Frustum frustum = math::extractFrustum(viewProjection);
+        const bool roadVisible = math::sphereInsideFrustum(frustum, {0.0F, 0.0F, 4.0F}, 1000.0F);
+        const math::Mat4 mvp = math::multiply(viewProjection, model);
         PushConstants pushConstants{};
         std::memcpy(pushConstants.mvp, mvp.data(), sizeof(pushConstants.mvp));
+
+        if (!roadVisible) {
+            vkCmdEndRenderPass(commandBuffer);
+            (void)checkResult(vkEndCommandBuffer(commandBuffer), "vkEndCommandBuffer");
+            return;
+        }
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
         vkCmdPushConstants(commandBuffer, pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
