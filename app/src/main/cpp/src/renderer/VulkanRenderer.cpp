@@ -2,6 +2,7 @@
 
 #include "roadforge/core/Log.hpp"
 #include "roadforge/math/Vec.hpp"
+#include "roadforge/renderer/GeneratedShaders.hpp"
 
 #include <vulkan/vulkan_android.h>
 
@@ -86,6 +87,7 @@ bool VulkanRenderer::initialize(ANativeWindow* window) {
         || !createSwapchain()
         || !createImageViews()
         || !createRenderPass()
+        || !createGraphicsPipeline()
         || !createFramebuffers()
         || !createCommandPool()
         || !createCommandBuffers()
@@ -517,6 +519,135 @@ bool VulkanRenderer::createRenderPass() {
     return checkResult(vkCreateRenderPass(device_, &renderPassInfo, nullptr, &renderPass_), "vkCreateRenderPass");
 }
 
+bool VulkanRenderer::createGraphicsPipeline() {
+    const VkShaderModule vertexShader = createShaderModule(
+        shaders::kDebugTriangleVertSpv.data(),
+        shaders::kDebugTriangleVertSpv.size());
+    const VkShaderModule fragmentShader = createShaderModule(
+        shaders::kDebugTriangleFragSpv.data(),
+        shaders::kDebugTriangleFragSpv.size());
+
+    if (vertexShader == VK_NULL_HANDLE || fragmentShader == VK_NULL_HANDLE) {
+        if (vertexShader != VK_NULL_HANDLE) {
+            vkDestroyShaderModule(device_, vertexShader, nullptr);
+        }
+        if (fragmentShader != VK_NULL_HANDLE) {
+            vkDestroyShaderModule(device_, fragmentShader, nullptr);
+        }
+        return false;
+    }
+
+    VkPipelineShaderStageCreateInfo vertexStage{};
+    vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertexStage.module = vertexShader;
+    vertexStage.pName = "main";
+
+    VkPipelineShaderStageCreateInfo fragmentStage{};
+    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragmentStage.module = fragmentShader;
+    fragmentStage.pName = "main";
+
+    const VkPipelineShaderStageCreateInfo shaderStages[] = { vertexStage, fragmentStage };
+
+    VkPipelineVertexInputStateCreateInfo vertexInput{};
+    vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+    VkViewport viewport{};
+    viewport.x = 0.0F;
+    viewport.y = 0.0F;
+    viewport.width = static_cast<float>(swapchainExtent_.width);
+    viewport.height = static_cast<float>(swapchainExtent_.height);
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapchainExtent_;
+
+    VkPipelineViewportStateCreateInfo viewportState{};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.viewportCount = 1;
+    viewportState.pViewports = &viewport;
+    viewportState.scissorCount = 1;
+    viewportState.pScissors = &scissor;
+
+    VkPipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.lineWidth = 1.0F;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizer.depthBiasEnable = VK_FALSE;
+
+    VkPipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+        | VK_COLOR_COMPONENT_G_BIT
+        | VK_COLOR_COMPONENT_B_BIT
+        | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = VK_FALSE;
+
+    VkPipelineColorBlendStateCreateInfo colorBlending{};
+    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+    bool success = checkResult(vkCreatePipelineLayout(device_, &pipelineLayoutInfo, nullptr, &pipelineLayout_), "vkCreatePipelineLayout");
+    if (success) {
+        VkGraphicsPipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineInfo.stageCount = 2;
+        pipelineInfo.pStages = shaderStages;
+        pipelineInfo.pVertexInputState = &vertexInput;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &rasterizer;
+        pipelineInfo.pMultisampleState = &multisampling;
+        pipelineInfo.pDepthStencilState = nullptr;
+        pipelineInfo.pColorBlendState = &colorBlending;
+        pipelineInfo.pDynamicState = nullptr;
+        pipelineInfo.layout = pipelineLayout_;
+        pipelineInfo.renderPass = renderPass_;
+        pipelineInfo.subpass = 0;
+        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+        success = checkResult(vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline_), "vkCreateGraphicsPipelines");
+    }
+
+    vkDestroyShaderModule(device_, fragmentShader, nullptr);
+    vkDestroyShaderModule(device_, vertexShader, nullptr);
+
+    if (!success) {
+        if (graphicsPipeline_ != VK_NULL_HANDLE) {
+            vkDestroyPipeline(device_, graphicsPipeline_, nullptr);
+            graphicsPipeline_ = VK_NULL_HANDLE;
+        }
+        if (pipelineLayout_ != VK_NULL_HANDLE) {
+            vkDestroyPipelineLayout(device_, pipelineLayout_, nullptr);
+            pipelineLayout_ = VK_NULL_HANDLE;
+        }
+    }
+
+    return success;
+}
+
 bool VulkanRenderer::createFramebuffers() {
     framebuffers_.resize(swapchainImageViews_.size(), VK_NULL_HANDLE);
 
@@ -596,6 +727,16 @@ void VulkanRenderer::cleanupSwapchain() {
     }
     framebuffers_.clear();
 
+    if (graphicsPipeline_ != VK_NULL_HANDLE) {
+        vkDestroyPipeline(device_, graphicsPipeline_, nullptr);
+        graphicsPipeline_ = VK_NULL_HANDLE;
+    }
+
+    if (pipelineLayout_ != VK_NULL_HANDLE) {
+        vkDestroyPipelineLayout(device_, pipelineLayout_, nullptr);
+        pipelineLayout_ = VK_NULL_HANDLE;
+    }
+
     if (renderPass_ != VK_NULL_HANDLE) {
         vkDestroyRenderPass(device_, renderPass_, nullptr);
         renderPass_ = VK_NULL_HANDLE;
@@ -638,6 +779,7 @@ bool VulkanRenderer::recreateSwapchain() {
     return createSwapchain()
         && createImageViews()
         && createRenderPass()
+        && createGraphicsPipeline()
         && createFramebuffers();
 }
 
@@ -682,9 +824,31 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     renderPassInfo.pClearValues = &clearColor;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    if (graphicsPipeline_ != VK_NULL_HANDLE) {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
+        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    }
     vkCmdEndRenderPass(commandBuffer);
 
     (void)checkResult(vkEndCommandBuffer(commandBuffer), "vkEndCommandBuffer");
+}
+
+VkShaderModule VulkanRenderer::createShaderModule(const uint8_t* code, size_t size) const {
+    if (code == nullptr || size == 0 || (size % sizeof(uint32_t)) != 0) {
+        RF_LOGE("Invalid shader bytecode size: %zu", size);
+        return VK_NULL_HANDLE;
+    }
+
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = size;
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code);
+
+    VkShaderModule shaderModule = VK_NULL_HANDLE;
+    if (!checkResult(vkCreateShaderModule(device_, &createInfo, nullptr, &shaderModule), "vkCreateShaderModule")) {
+        return VK_NULL_HANDLE;
+    }
+    return shaderModule;
 }
 
 bool VulkanRenderer::isDeviceSuitable(VkPhysicalDevice device) const {

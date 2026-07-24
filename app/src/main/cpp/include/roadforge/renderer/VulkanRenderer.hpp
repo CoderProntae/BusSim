@@ -3,6 +3,7 @@
 #include <android/native_window.h>
 #include <vulkan/vulkan.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -54,6 +55,7 @@ private:
     bool createSwapchain();
     bool createImageViews();
     bool createRenderPass();
+    bool createGraphicsPipeline();
     bool createFramebuffers();
     bool createCommandPool();
     bool createCommandBuffers();
@@ -62,6 +64,7 @@ private:
     void cleanupSwapchain();
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
 
     [[nodiscard]] bool isDeviceSuitable(VkPhysicalDevice device) const;
     [[nodiscard]] QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
@@ -98,6 +101,8 @@ private:
     VkFormat swapchainImageFormat_ = VK_FORMAT_UNDEFINED;
     VkExtent2D swapchainExtent_{};
     VkRenderPass renderPass_ = VK_NULL_HANDLE;
+    VkPipelineLayout pipelineLayout_ = VK_NULL_HANDLE;
+    VkPipeline graphicsPipeline_ = VK_NULL_HANDLE;
     VkCommandPool commandPool_ = VK_NULL_HANDLE;
 
     std::vector<VkImage> swapchainImages_;
