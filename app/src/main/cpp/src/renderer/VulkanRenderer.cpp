@@ -191,10 +191,14 @@ void VulkanRenderer::setTouchPulse(float seconds) {
 }
 
 void VulkanRenderer::setInputDebug(float steering, float throttle, float brake, bool touchActive) {
-    debugSteering_ = std::clamp(steering, -1.0F, 1.0F);
-    debugThrottle_ = std::clamp(throttle, 0.0F, 1.0F);
-    debugBrake_ = std::clamp(brake, 0.0F, 1.0F);
     debugTouchActive_ = touchActive;
+
+    if (touchActive) {
+        debugSteering_ = std::clamp(steering, -1.0F, 1.0F);
+        debugThrottle_ = std::clamp(throttle, 0.0F, 1.0F);
+        debugBrake_ = std::clamp(brake, 0.0F, 1.0F);
+        debugInputHoldSeconds_ = 0.55F;
+    }
 }
 
 void VulkanRenderer::setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha) {
@@ -205,6 +209,7 @@ void VulkanRenderer::setSimulationTiming(double appTimeSeconds, uint64_t simulat
 
 void VulkanRenderer::tick(float deltaSeconds) {
     touchPulseSeconds_ = std::max(0.0F, touchPulseSeconds_ - deltaSeconds);
+    debugInputHoldSeconds_ = std::max(0.0F, debugInputHoldSeconds_ - deltaSeconds);
 }
 
 void VulkanRenderer::drawFrame() {
@@ -897,18 +902,35 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     const float breathe = 0.5F + (0.5F * std::sin(static_cast<float>(appTimeSeconds_) * 1.8F));
     const float fixedTickPhase = static_cast<float>(simulationTick_ % 60U) / 60.0F;
     const float interpolation = static_cast<float>(interpolationAlpha_);
+    const bool showInputDebug = debugTouchActive_ || debugInputHoldSeconds_ > 0.0F;
 
-    const float steerLeft = std::max(0.0F, -debugSteering_);
-    const float steerRight = std::max(0.0F, debugSteering_);
-    const float activeTint = debugTouchActive_ ? 0.018F : 0.0F;
-    const math::Vec4 base = {
-        0.016F + (0.006F * fixedTickPhase) + (0.030F * debugBrake_) + (0.018F * steerRight),
-        0.044F + (0.020F * breathe) + (0.032F * debugThrottle_) + activeTint,
-        0.082F + (0.018F * interpolation) + (0.020F * steerLeft),
+    math::Vec4 base = {
+        0.016F + (0.006F * fixedTickPhase),
+        0.044F + (0.020F * breathe),
+        0.082F + (0.018F * interpolation),
         1.0F,
     };
+
+    if (showInputDebug) {
+        if (debugBrake_ > 0.5F) {
+            // Alt sol: fren. Bilerek belirgin kırmızı.
+            base = { 0.36F, 0.035F, 0.035F, 1.0F };
+        } else if (debugThrottle_ > 0.5F) {
+            // Alt sağ: gaz. Bilerek belirgin yeşil.
+            base = { 0.025F, 0.30F, 0.075F, 1.0F };
+        } else if (debugSteering_ < -0.25F) {
+            // Sol taraf: direksiyon sol. Bilerek belirgin mavi.
+            base = { 0.035F, 0.10F, 0.36F, 1.0F };
+        } else if (debugSteering_ > 0.25F) {
+            // Sağ taraf: direksiyon sağ. Bilerek belirgin mor/sarımsı sıcak ton.
+            base = { 0.30F, 0.14F, 0.035F, 1.0F };
+        } else {
+            base = { 0.12F, 0.10F, 0.24F, 1.0F };
+        }
+    }
+
     const math::Vec4 touch = { 0.95F, 0.38F, 0.06F, 1.0F };
-    const math::Vec4 finalColor = math::lerp(base, touch, pulse);
+    const math::Vec4 finalColor = math::lerp(base, touch, pulse * 0.35F);
 
     VkClearValue clearColor{};
     clearColor.color.float32[0] = finalColor.x;

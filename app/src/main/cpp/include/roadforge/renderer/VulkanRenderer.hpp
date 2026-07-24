@@ -91,6 +91,7 @@ private:
     float debugSteering_ = 0.0F;
     float debugThrottle_ = 0.0F;
     float debugBrake_ = 0.0F;
+    float debugInputHoldSeconds_ = 0.0F;
     bool debugTouchActive_ = false;
 
     ANativeWindow* window_ = nullptr;

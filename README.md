@@ -19,11 +19,13 @@ Android SurfaceView + touch
 Beklenen davranış:
 
 - Uygulama landscape tam ekran açılır.
-- Vulkan 1.1 destekli cihazda koyu lacivert ekran görünür.
-- Ekrana dokununca kısa süre turuncu tonlu clear color görünür.
+- Vulkan 1.1 destekli cihazda koyu lacivert arka plan görünür.
+- Ortada vertex/index buffer ile çizilen koyu debug yol plakası görünür.
+- Ekrana dokununca kısa turuncu pulse görünür.
+- Alt sağ dokunma belirgin yeşil, alt sol dokunma belirgin kırmızı, sol/sağ dokunma mavi/sıcak tonlu debug geri bildirimi verir.
 - Pause/resume ve Surface yeniden oluşturma durumlarında Vulkan kaynakları güvenli kapatılıp yeniden kurulur.
 
-> Not: Bu temel sürümde shader, mesh, otobüs modeli, fizik veya UI yoktur. Bunlar Faz 1 ve Faz 2'de küçük doğrulanabilir adımlarla eklenecektir.
+> Not: Bu sürümde shader pipeline ve debug mesh vardır; otobüs modeli, fizik ve oyun UI henüz yoktur. Bunlar Faz 1/Faz 2 içinde küçük doğrulanabilir adımlarla eklenecektir.
 
 ## Teknik hedefler
 
@@ -62,7 +64,13 @@ Beklenen davranış:
 └── docs/
     ├── 00_TEKNIK_ANAYASA.md
     ├── 01_URUN_MVP_VE_SISTEMLER.md
-    └── 02_ROADMAP.md
+    ├── 02_ROADMAP.md
+    ├── 03_GITHUB_ACTIONS_TELEFON_APK.md
+    ├── 04_FAZ1_CORE_CLOCK_MATH.md
+    ├── 05_FAZ1_INPUT_FRAME_STATS.md
+    ├── 06_FAZ1_SHADER_TRIANGLE.md
+    ├── 07_FAZ1_VERTEX_INDEX_MESH.md
+    └── 08_FAZ1_VISIBLE_INPUT_FEEDBACK.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -73,7 +81,7 @@ Beklenen davranış:
 4. Workflow başarılı olursa artifact olarak `roadforge-bussim-debug-apk` indir.
 5. ZIP içinden `app-debug.apk` dosyasını telefona çıkar.
 6. Android telefonda “bilinmeyen uygulama yükleme” izni verip APK'yı kur.
-7. Beklenen sonuç: koyu lacivert Vulkan ekranı; dokununca kısa turuncu tepki.
+7. Beklenen sonuç: lacivert Vulkan arka planı, ortada debug yol plakası, dokununca turuncu pulse; alt sağ yeşil, alt sol kırmızı input debug rengi.
 
 > Not: Arena'nın GitHub bağlantısında `workflows` yetkisi olmadığı için workflow dosyasını otomatik push edemedim. Kod branch'e push edildi; workflow içeriği `docs/03_GITHUB_ACTIONS_TELEFON_APK.md` içinde hazırdır.
 
@@ -96,10 +104,10 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim ve ilk vertex/index buffer debug mesh. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh ve görünür input debug geri bildirimi. Sıradaki parçalar:
 
-1. Core altyapı: assert, result/error, zamanlayıcı, profiler iskeleti.
-2. Math: vector/matrix/quaternion.
-3. Sabit 60 Hz simulation clock + render interpolation hazırlığı.
-4. ECS/world iskeleti.
-5. Shader/mesh pipeline ve 3D debug otobüs/yol sahnesi.
+1. Renderer buffer/resource kodunu temiz abstraction katmanına ayırmak.
+2. Depth buffer eklemek.
+3. `Mat4`, `Quat`, `Transform` math tiplerini eklemek.
+4. Perspektif kamera ve ilk 3D debug scene hazırlığı.
+5. ECS/world iskeleti.
