@@ -55,6 +55,7 @@ private:
     bool createDebugMeshResources();
     bool createSwapchain();
     bool createImageViews();
+    bool createDepthResources();
     bool createRenderPass();
     bool createGraphicsPipeline();
     bool createFramebuffers();
@@ -63,12 +64,16 @@ private:
     bool createSyncObjects();
 
     void cleanupDebugMeshResources();
+    void cleanupDepthResources();
     void cleanupSwapchain();
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
     [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& memory) const;
+    [[nodiscard]] bool createImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& memory) const;
+    [[nodiscard]] VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) const;
     [[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+    [[nodiscard]] VkFormat chooseDepthFormat() const;
 
     [[nodiscard]] bool isDeviceSuitable(VkPhysicalDevice device) const;
     [[nodiscard]] QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
@@ -105,6 +110,10 @@ private:
     VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
     VkFormat swapchainImageFormat_ = VK_FORMAT_UNDEFINED;
     VkExtent2D swapchainExtent_{};
+    VkFormat depthFormat_ = VK_FORMAT_UNDEFINED;
+    VkImage depthImage_ = VK_NULL_HANDLE;
+    VkDeviceMemory depthImageMemory_ = VK_NULL_HANDLE;
+    VkImageView depthImageView_ = VK_NULL_HANDLE;
     VkRenderPass renderPass_ = VK_NULL_HANDLE;
     VkPipelineLayout pipelineLayout_ = VK_NULL_HANDLE;
     VkPipeline graphicsPipeline_ = VK_NULL_HANDLE;
