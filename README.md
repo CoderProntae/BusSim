@@ -42,7 +42,6 @@ Beklenen davranış:
 ├── settings.gradle.kts
 ├── build.gradle.kts
 ├── gradle.properties
-├── .github/workflows/android-debug.yml
 ├── app/
 │   ├── build.gradle.kts
 │   └── src/main/
@@ -68,12 +67,15 @@ Beklenen davranış:
 
 ## Bilgisayarsız APK test akışı
 
-1. Bu depoyu GitHub'a yükle veya Arena branch'inden GitHub Actions çalıştır.
-2. GitHub'da **Actions → Android Debug APK** workflow'unu aç.
-3. Workflow başarılı olursa artifact olarak `roadforge-bussim-debug-apk` indir.
-4. ZIP içinden `app-debug.apk` dosyasını telefona çıkar.
-5. Android telefonda “bilinmeyen uygulama yükleme” izni verip APK'yı kur.
-6. Beklenen sonuç: koyu lacivert Vulkan ekranı; dokununca kısa turuncu tepki.
+1. Bu depoyu GitHub'a yükle veya Arena branch'ini aç.
+2. Eğer repoda `.github/workflows/android-debug.yml` yoksa `docs/03_GITHUB_ACTIONS_TELEFON_APK.md` dosyasındaki telefon adımlarını izleyerek workflow'u GitHub web arayüzünden oluştur.
+3. GitHub'da **Actions → Android Debug APK** workflow'unu aç.
+4. Workflow başarılı olursa artifact olarak `roadforge-bussim-debug-apk` indir.
+5. ZIP içinden `app-debug.apk` dosyasını telefona çıkar.
+6. Android telefonda “bilinmeyen uygulama yükleme” izni verip APK'yı kur.
+7. Beklenen sonuç: koyu lacivert Vulkan ekranı; dokununca kısa turuncu tepki.
+
+> Not: Arena'nın GitHub bağlantısında `workflows` yetkisi olmadığı için workflow dosyasını otomatik push edemedim. Kod branch'e push edildi; workflow içeriği `docs/03_GITHUB_ACTIONS_TELEFON_APK.md` içinde hazırdır.
 
 ## Yerel derleme
 
