@@ -11,8 +11,8 @@ android {
         applicationId = "com.roadforge.bussim"
         minSdk = 29
         targetSdk = 35
-        versionCode = 14
-        versionName = "0.1.12-faz1-separated-camera-input"
+        versionCode = 15
+        versionName = "0.1.13-faz1-debug-overlay"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

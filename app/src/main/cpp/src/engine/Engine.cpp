@@ -142,6 +142,7 @@ void Engine::frame(int64_t frameTimeNanos) {
     }
 
     renderer_.setInputDebug(input.steering, input.throttle, input.brake, input.primaryTouchDown);
+    renderer_.setFrameStats(stats);
     renderer_.setSimulationTiming(appTimeSeconds_, fixedUpdateCounter_, simulationStep.interpolationAlpha);
     renderer_.setDebugRoadTransform(world_.debugRoadTransform());
     const world::DebugCamera& camera = world_.debugCamera();

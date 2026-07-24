@@ -64,22 +64,36 @@ void appendQuad(std::vector<DebugVertex>& vertices,
 
 const std::array<uint8_t, 7>& glyphRows(char c) {
     static constexpr std::array<uint8_t, 7> kA = { 0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 };
+    static constexpr std::array<uint8_t, 7> kD = { 0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110 };
+    static constexpr std::array<uint8_t, 7> kF = { 0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000 };
     static constexpr std::array<uint8_t, 7> kG = { 0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110 };
+    static constexpr std::array<uint8_t, 7> kI = { 0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111 };
     static constexpr std::array<uint8_t, 7> kL = { 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111 };
+    static constexpr std::array<uint8_t, 7> kM = { 0b10001, 0b11011, 0b10101, 0b10101, 0b10001, 0b10001, 0b10001 };
     static constexpr std::array<uint8_t, 7> kO = { 0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 };
+    static constexpr std::array<uint8_t, 7> kP = { 0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000 };
+    static constexpr std::array<uint8_t, 7> kR = { 0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001 };
     static constexpr std::array<uint8_t, 7> kS = { 0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110 };
     static constexpr std::array<uint8_t, 7> kT = { 0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100 };
     static constexpr std::array<uint8_t, 7> kU = { 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 };
+    static constexpr std::array<uint8_t, 7> kX = { 0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001 };
     static constexpr std::array<uint8_t, 7> kBlank = { 0, 0, 0, 0, 0, 0, 0 };
 
     switch (c) {
         case 'A': return kA;
+        case 'D': return kD;
+        case 'F': return kF;
         case 'G': return kG;
+        case 'I': return kI;
         case 'L': return kL;
+        case 'M': return kM;
         case 'O': return kO;
+        case 'P': return kP;
+        case 'R': return kR;
         case 'S': return kS;
         case 'T': return kT;
         case 'U': return kU;
+        case 'X': return kX;
         default: return kBlank;
     }
 }
@@ -118,6 +132,57 @@ void appendLabel(std::vector<DebugVertex>& vertices,
                 appendQuad(vertices, indices, x0, z0, x0 + (cellSize * 0.82F), z0 + (cellSize * 0.82F), kTextY, color);
             }
         }
+    }
+}
+
+void appendOverlayQuad(std::vector<DebugVertex>& vertices,
+                       std::vector<uint16_t>& indices,
+                       float minX,
+                       float minY,
+                       float maxX,
+                       float maxY,
+                       float z,
+                       const std::array<float, 3>& color) {
+    const uint16_t base = static_cast<uint16_t>(vertices.size());
+    vertices.push_back(DebugVertex{{ minX, minY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ maxX, minY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ maxX, maxY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ minX, maxY, z }, { color[0], color[1], color[2] }});
+    indices.push_back(base);
+    indices.push_back(static_cast<uint16_t>(base + 1));
+    indices.push_back(static_cast<uint16_t>(base + 2));
+    indices.push_back(static_cast<uint16_t>(base + 2));
+    indices.push_back(static_cast<uint16_t>(base + 3));
+    indices.push_back(base);
+}
+
+void appendOverlayLabel(std::vector<DebugVertex>& vertices,
+                        std::vector<uint16_t>& indices,
+                        const char* text,
+                        float minX,
+                        float maxY,
+                        float cellSize,
+                        const std::array<float, 3>& color) {
+    constexpr float kOverlayZ = 0.0F;
+    float cursorX = minX;
+    for (int glyph = 0; text[glyph] != '\0'; ++glyph) {
+        if (text[glyph] == ' ') {
+            cursorX += cellSize * 3.0F;
+            continue;
+        }
+        const std::array<uint8_t, 7>& rows = glyphRows(text[glyph]);
+        for (int row = 0; row < 7; ++row) {
+            for (int col = 0; col < 5; ++col) {
+                const bool enabled = ((rows[row] >> (4 - col)) & 0x1U) != 0U;
+                if (!enabled) {
+                    continue;
+                }
+                const float x0 = cursorX + (static_cast<float>(col) * cellSize);
+                const float y1 = maxY - (static_cast<float>(row) * cellSize);
+                appendOverlayQuad(vertices, indices, x0, y1 - (cellSize * 0.82F), x0 + (cellSize * 0.82F), y1, kOverlayZ, color);
+            }
+        }
+        cursorX += cellSize * 6.0F;
     }
 }
 
@@ -206,6 +271,7 @@ bool VulkanRenderer::initialize(ANativeWindow* window) {
         || !pickPhysicalDevice()
         || !createLogicalDevice()
         || !createDebugMeshResources()
+        || !createDebugOverlayResources()
         || !createSwapchain()
         || !createImageViews()
         || !createDepthResources()
@@ -230,6 +296,7 @@ void VulkanRenderer::shutdown() {
     }
 
     cleanupSwapchain();
+    cleanupDebugOverlayResources();
     cleanupDebugMeshResources();
 
     for (VkSemaphore semaphore : renderFinishedSemaphores_) {
@@ -320,6 +387,10 @@ void VulkanRenderer::setDebugCamera(const math::Vec3& eye, const math::Vec3& tar
     debugCameraTarget_ = target;
     debugCameraUp_ = up;
     debugCameraFovYRadians_ = fovYRadians;
+}
+
+void VulkanRenderer::setFrameStats(const core::FrameStatsSnapshot& stats) {
+    frameStats_ = stats;
 }
 
 void VulkanRenderer::tick(float deltaSeconds) {
@@ -566,6 +637,30 @@ bool VulkanRenderer::createDebugMeshResources() {
 
     debugIndexCount_ = static_cast<uint32_t>(indices.size());
     RF_LOGI("Debug orientation square resources created: vertices=%zu indices=%u", vertices.size(), debugIndexCount_);
+    return true;
+}
+
+bool VulkanRenderer::createDebugOverlayResources() {
+    constexpr VkDeviceSize kOverlayVertexBufferSize = sizeof(DebugVertex) * 2048U;
+    constexpr VkDeviceSize kOverlayIndexBufferSize = sizeof(uint16_t) * 3072U;
+
+    for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
+        if (!createBuffer(kOverlayVertexBufferSize,
+                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                          overlayVertexBuffers_[frame])) {
+            return false;
+        }
+        if (!createBuffer(kOverlayIndexBufferSize,
+                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                          overlayIndexBuffers_[frame])) {
+            return false;
+        }
+        overlayIndexCounts_[frame] = 0;
+    }
+
+    RF_LOGI("Debug overlay resources created for %u frames", kMaxFramesInFlight);
     return true;
 }
 
@@ -847,7 +942,7 @@ bool VulkanRenderer::createGraphicsPipeline() {
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depthStencil.depthTestEnable = VK_TRUE;
     depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
 
@@ -977,6 +1072,14 @@ void VulkanRenderer::cleanupDebugMeshResources() {
     debugIndexCount_ = 0;
 }
 
+void VulkanRenderer::cleanupDebugOverlayResources() {
+    for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
+        overlayIndexBuffers_[frame].destroy();
+        overlayVertexBuffers_[frame].destroy();
+        overlayIndexCounts_[frame] = 0;
+    }
+}
+
 void VulkanRenderer::cleanupDepthResources() {
     depthImage_.destroy();
     depthFormat_ = VK_FORMAT_UNDEFINED;
@@ -1047,6 +1150,68 @@ bool VulkanRenderer::recreateSwapchain() {
         && createRenderPass()
         && createGraphicsPipeline()
         && createFramebuffers();
+}
+
+bool VulkanRenderer::updateDebugOverlayBuffers(uint32_t frameIndex) {
+    if (frameIndex >= kMaxFramesInFlight || !overlayVertexBuffers_[frameIndex].valid() || !overlayIndexBuffers_[frameIndex].valid()) {
+        return false;
+    }
+
+    std::vector<DebugVertex> vertices;
+    std::vector<uint16_t> indices;
+    vertices.reserve(256);
+    indices.reserve(384);
+
+    constexpr float z = 0.0F;
+    appendOverlayQuad(vertices, indices, -0.965F, 0.615F, -0.305F, 0.955F, z, { 0.015F, 0.018F, 0.024F });
+    appendOverlayQuad(vertices, indices, -0.955F, 0.925F, -0.315F, 0.945F, z, { 0.10F, 0.12F, 0.16F });
+    appendOverlayLabel(vertices, indices, "FPS", -0.935F, 0.900F, 0.0085F, { 0.78F, 0.95F, 0.82F });
+    appendOverlayLabel(vertices, indices, "MS", -0.935F, 0.820F, 0.0085F, { 0.96F, 0.84F, 0.45F });
+    appendOverlayLabel(vertices, indices, "SIM", -0.935F, 0.740F, 0.0085F, { 0.66F, 0.82F, 1.00F });
+    appendOverlayLabel(vertices, indices, "DRP", -0.935F, 0.660F, 0.0085F, { 1.00F, 0.50F, 0.50F });
+
+    const float fpsRatio = std::clamp(static_cast<float>(frameStats_.estimatedFps / 60.0), 0.0F, 1.0F);
+    const float frameRatio = std::clamp(static_cast<float>(1.0 - (frameStats_.averageFrameMs / 33.333)), 0.0F, 1.0F);
+    const float simRatio = std::clamp(static_cast<float>(frameStats_.averageFixedSteps / 2.0), 0.0F, 1.0F);
+    const float droppedRatio = frameStats_.droppedTimeEvents > 0 ? 1.0F : 0.05F;
+
+    const auto appendBar = [&vertices, &indices](float y, float ratio, const std::array<float, 3>& color) {
+        constexpr float zBar = 0.0F;
+        constexpr float x0 = -0.765F;
+        constexpr float x1 = -0.335F;
+        constexpr float h = 0.035F;
+        appendOverlayQuad(vertices, indices, x0, y, x1, y + h, zBar, { 0.055F, 0.062F, 0.075F });
+        appendOverlayQuad(vertices, indices, x0, y, x0 + ((x1 - x0) * ratio), y + h, zBar, color);
+    };
+
+    appendBar(0.865F, fpsRatio, { 0.10F, 0.90F, 0.22F });
+    appendBar(0.785F, frameRatio, { 0.95F, 0.70F, 0.12F });
+    appendBar(0.705F, simRatio, { 0.18F, 0.50F, 1.00F });
+    appendBar(0.625F, droppedRatio, frameStats_.droppedTimeEvents > 0 ? std::array<float, 3>{ 1.0F, 0.05F, 0.02F } : std::array<float, 3>{ 0.16F, 0.22F, 0.18F });
+
+    const VkDeviceSize vertexBytes = sizeof(DebugVertex) * vertices.size();
+    const VkDeviceSize indexBytes = sizeof(uint16_t) * indices.size();
+    if (vertexBytes > overlayVertexBuffers_[frameIndex].size || indexBytes > overlayIndexBuffers_[frameIndex].size) {
+        RF_LOGE("Debug overlay buffer overflow: vertexBytes=%llu indexBytes=%llu", static_cast<unsigned long long>(vertexBytes), static_cast<unsigned long long>(indexBytes));
+        return false;
+    }
+
+    void* vertexData = nullptr;
+    if (!checkResult(vkMapMemory(device_, overlayVertexBuffers_[frameIndex].memory, 0, vertexBytes, 0, &vertexData), "vkMapMemory(overlay vertex)")) {
+        return false;
+    }
+    std::memcpy(vertexData, vertices.data(), static_cast<size_t>(vertexBytes));
+    vkUnmapMemory(device_, overlayVertexBuffers_[frameIndex].memory);
+
+    void* indexData = nullptr;
+    if (!checkResult(vkMapMemory(device_, overlayIndexBuffers_[frameIndex].memory, 0, indexBytes, 0, &indexData), "vkMapMemory(overlay index)")) {
+        return false;
+    }
+    std::memcpy(indexData, indices.data(), static_cast<size_t>(indexBytes));
+    vkUnmapMemory(device_, overlayIndexBuffers_[frameIndex].memory);
+
+    overlayIndexCounts_[frameIndex] = static_cast<uint32_t>(indices.size());
+    return true;
 }
 
 void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -1139,6 +1304,20 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         vkCmdBindIndexBuffer(commandBuffer, debugIndexBuffer_.buffer, 0, VK_INDEX_TYPE_UINT16);
         vkCmdDrawIndexed(commandBuffer, debugIndexCount_, 1, 0, 0, 0);
     }
+
+    if (updateDebugOverlayBuffers(currentFrame_) && overlayIndexCounts_[currentFrame_] > 0) {
+        const VkBuffer overlayVertexBuffers[] = { overlayVertexBuffers_[currentFrame_].buffer };
+        const VkDeviceSize overlayOffsets[] = { 0 };
+        const math::Mat4 overlayMvp = math::identity();
+        PushConstants overlayPushConstants{};
+        std::memcpy(overlayPushConstants.mvp, overlayMvp.data(), sizeof(overlayPushConstants.mvp));
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
+        vkCmdPushConstants(commandBuffer, pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &overlayPushConstants);
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, overlayVertexBuffers, overlayOffsets);
+        vkCmdBindIndexBuffer(commandBuffer, overlayIndexBuffers_[currentFrame_].buffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(commandBuffer, overlayIndexCounts_[currentFrame_], 1, 0, 0, 0);
+    }
+
     vkCmdEndRenderPass(commandBuffer);
 
     (void)checkResult(vkEndCommandBuffer(commandBuffer), "vkEndCommandBuffer");

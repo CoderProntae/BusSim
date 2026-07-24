@@ -3,9 +3,11 @@
 #include <android/native_window.h>
 #include <vulkan/vulkan.h>
 
+#include "roadforge/core/FrameStats.hpp"
 #include "roadforge/math/Transform.hpp"
 #include "roadforge/renderer/VulkanResources.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -32,6 +34,7 @@ public:
     void setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha);
     void setDebugRoadTransform(const math::Transform& transform);
     void setDebugCamera(const math::Vec3& eye, const math::Vec3& target, const math::Vec3& up, float fovYRadians);
+    void setFrameStats(const core::FrameStatsSnapshot& stats);
     void tick(float deltaSeconds);
     void drawFrame();
 
@@ -58,6 +61,7 @@ private:
     bool pickPhysicalDevice();
     bool createLogicalDevice();
     bool createDebugMeshResources();
+    bool createDebugOverlayResources();
     bool createSwapchain();
     bool createImageViews();
     bool createDepthResources();
@@ -69,10 +73,12 @@ private:
     bool createSyncObjects();
 
     void cleanupDebugMeshResources();
+    void cleanupDebugOverlayResources();
     void cleanupDepthResources();
     void cleanupSwapchain();
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    bool updateDebugOverlayBuffers(uint32_t frameIndex);
     [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
     [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, DeviceBuffer& output) const;
     [[nodiscard]] bool createImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, DeviceImage& output) const;
@@ -108,6 +114,7 @@ private:
     math::Vec3 debugCameraTarget_{ 0.0F, 0.0F, 3.4F };
     math::Vec3 debugCameraUp_{ 0.0F, 1.0F, 0.0F };
     float debugCameraFovYRadians_ = 60.0F * 0.01745329252F;
+    core::FrameStatsSnapshot frameStats_{};
 
     ANativeWindow* window_ = nullptr;
 
@@ -129,6 +136,9 @@ private:
     DeviceBuffer debugVertexBuffer_;
     DeviceBuffer debugIndexBuffer_;
     uint32_t debugIndexCount_ = 0;
+    std::array<DeviceBuffer, kMaxFramesInFlight> overlayVertexBuffers_;
+    std::array<DeviceBuffer, kMaxFramesInFlight> overlayIndexBuffers_;
+    std::array<uint32_t, kMaxFramesInFlight> overlayIndexCounts_{};
 
     std::vector<VkImage> swapchainImages_;
     std::vector<VkImageView> swapchainImageViews_;
