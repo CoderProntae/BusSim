@@ -22,7 +22,7 @@ Beklenen davranış:
 - Vulkan 1.1 destekli cihazda koyu lacivert arka plan görünür.
 - Ortada vertex/index buffer ile çizilen koyu debug yol plakası görünür.
 - Ekrana dokununca kısa turuncu pulse görünür.
-- Alt sağ dokunma belirgin yeşil, alt sol dokunma belirgin kırmızı, sol/sağ dokunma mavi/sıcak tonlu debug geri bildirimi verir.
+- Alt sağ dokunma parlak yeşil, alt sol dokunma parlak kırmızı, sol/sağ dokunma parlak mavi/sarı-turuncu diagnostic geri bildirimi verir ve yaklaşık 1.25 saniye ekranda kalır.
 - Pause/resume ve Surface yeniden oluşturma durumlarında Vulkan kaynakları güvenli kapatılıp yeniden kurulur.
 
 > Not: Bu sürümde shader pipeline ve debug mesh vardır; otobüs modeli, fizik ve oyun UI henüz yoktur. Bunlar Faz 1/Faz 2 içinde küçük doğrulanabilir adımlarla eklenecektir.
@@ -70,7 +70,8 @@ Beklenen davranış:
     ├── 05_FAZ1_INPUT_FRAME_STATS.md
     ├── 06_FAZ1_SHADER_TRIANGLE.md
     ├── 07_FAZ1_VERTEX_INDEX_MESH.md
-    └── 08_FAZ1_VISIBLE_INPUT_FEEDBACK.md
+    ├── 08_FAZ1_VISIBLE_INPUT_FEEDBACK.md
+    └── 09_FAZ1_INPUT_DIAGNOSTIC_COLORS.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -81,7 +82,7 @@ Beklenen davranış:
 4. Workflow başarılı olursa artifact olarak `roadforge-bussim-debug-apk` indir.
 5. ZIP içinden `app-debug.apk` dosyasını telefona çıkar.
 6. Android telefonda “bilinmeyen uygulama yükleme” izni verip APK'yı kur.
-7. Beklenen sonuç: lacivert Vulkan arka planı, ortada debug yol plakası, dokununca turuncu pulse; alt sağ yeşil, alt sol kırmızı input debug rengi.
+7. Beklenen sonuç: lacivert Vulkan arka planı, ortada debug yol plakası, dokununca turuncu pulse; alt sağ parlak yeşil, alt sol parlak kırmızı input diagnostic rengi.
 
 > Not: Arena'nın GitHub bağlantısında `workflows` yetkisi olmadığı için workflow dosyasını otomatik push edemedim. Kod branch'e push edildi; workflow içeriği `docs/03_GITHUB_ACTIONS_TELEFON_APK.md` içinde hazırdır.
 

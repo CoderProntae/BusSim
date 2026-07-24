@@ -197,7 +197,7 @@ void VulkanRenderer::setInputDebug(float steering, float throttle, float brake, 
         debugSteering_ = std::clamp(steering, -1.0F, 1.0F);
         debugThrottle_ = std::clamp(throttle, 0.0F, 1.0F);
         debugBrake_ = std::clamp(brake, 0.0F, 1.0F);
-        debugInputHoldSeconds_ = 0.55F;
+        debugInputHoldSeconds_ = 1.25F;
     }
 }
 
@@ -913,24 +913,25 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
 
     if (showInputDebug) {
         if (debugBrake_ > 0.5F) {
-            // Alt sol: fren. Bilerek belirgin kırmızı.
-            base = { 0.36F, 0.035F, 0.035F, 1.0F };
+            // Alt sol: fren. Testte kaçmasın diye tüm arka plan parlak kırmızı olur.
+            base = { 0.95F, 0.00F, 0.00F, 1.0F };
         } else if (debugThrottle_ > 0.5F) {
-            // Alt sağ: gaz. Bilerek belirgin yeşil.
-            base = { 0.025F, 0.30F, 0.075F, 1.0F };
+            // Alt sağ: gaz. Testte kaçmasın diye tüm arka plan parlak yeşil olur.
+            base = { 0.00F, 0.85F, 0.08F, 1.0F };
         } else if (debugSteering_ < -0.25F) {
-            // Sol taraf: direksiyon sol. Bilerek belirgin mavi.
-            base = { 0.035F, 0.10F, 0.36F, 1.0F };
+            // Sol taraf: direksiyon sol. Parlak mavi.
+            base = { 0.00F, 0.18F, 0.95F, 1.0F };
         } else if (debugSteering_ > 0.25F) {
-            // Sağ taraf: direksiyon sağ. Bilerek belirgin mor/sarımsı sıcak ton.
-            base = { 0.30F, 0.14F, 0.035F, 1.0F };
+            // Sağ taraf: direksiyon sağ. Parlak sarı/turuncu.
+            base = { 0.95F, 0.72F, 0.00F, 1.0F };
         } else {
-            base = { 0.12F, 0.10F, 0.24F, 1.0F };
+            base = { 0.55F, 0.00F, 0.85F, 1.0F };
         }
     }
 
     const math::Vec4 touch = { 0.95F, 0.38F, 0.06F, 1.0F };
-    const math::Vec4 finalColor = math::lerp(base, touch, pulse * 0.35F);
+    const float touchMix = showInputDebug ? 0.0F : pulse;
+    const math::Vec4 finalColor = math::lerp(base, touch, touchMix);
 
     VkClearValue clearColor{};
     clearColor.color.float32[0] = finalColor.x;
