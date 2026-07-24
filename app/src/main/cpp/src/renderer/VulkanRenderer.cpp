@@ -17,6 +17,7 @@
 #include <cstring>
 #include <limits>
 #include <set>
+#include <vector>
 
 namespace roadforge::renderer {
 
@@ -40,17 +41,112 @@ struct PushConstants final {
     float mvp[16];
 };
 
-constexpr std::array<DebugVertex, 4> kDebugRoadPlateVertices = {
-    DebugVertex{{-2.35F, 0.0F, 0.0F}, {0.07F, 0.08F, 0.09F}},
-    DebugVertex{{ 2.35F, 0.0F, 0.0F}, {0.10F, 0.11F, 0.12F}},
-    DebugVertex{{ 1.05F, 0.0F, 8.0F}, {0.18F, 0.19F, 0.20F}},
-    DebugVertex{{-1.05F, 0.0F, 8.0F}, {0.15F, 0.16F, 0.17F}},
-};
+void appendQuad(std::vector<DebugVertex>& vertices,
+                std::vector<uint16_t>& indices,
+                float minX,
+                float minZ,
+                float maxX,
+                float maxZ,
+                float y,
+                const std::array<float, 3>& color) {
+    const uint16_t base = static_cast<uint16_t>(vertices.size());
+    vertices.push_back(DebugVertex{{ minX, y, minZ }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ maxX, y, minZ }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ maxX, y, maxZ }, { color[0], color[1], color[2] }});
+    vertices.push_back(DebugVertex{{ minX, y, maxZ }, { color[0], color[1], color[2] }});
+    indices.push_back(base);
+    indices.push_back(static_cast<uint16_t>(base + 1));
+    indices.push_back(static_cast<uint16_t>(base + 2));
+    indices.push_back(static_cast<uint16_t>(base + 2));
+    indices.push_back(static_cast<uint16_t>(base + 3));
+    indices.push_back(base);
+}
 
-constexpr std::array<uint16_t, 6> kDebugRoadPlateIndices = {
-    0, 1, 2,
-    2, 3, 0,
-};
+const std::array<uint8_t, 7>& glyphRows(char c) {
+    static constexpr std::array<uint8_t, 7> kA = { 0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 };
+    static constexpr std::array<uint8_t, 7> kG = { 0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110 };
+    static constexpr std::array<uint8_t, 7> kL = { 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111 };
+    static constexpr std::array<uint8_t, 7> kO = { 0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 };
+    static constexpr std::array<uint8_t, 7> kS = { 0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110 };
+    static constexpr std::array<uint8_t, 7> kT = { 0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100 };
+    static constexpr std::array<uint8_t, 7> kU = { 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 };
+    static constexpr std::array<uint8_t, 7> kBlank = { 0, 0, 0, 0, 0, 0, 0 };
+
+    switch (c) {
+        case 'A': return kA;
+        case 'G': return kG;
+        case 'L': return kL;
+        case 'O': return kO;
+        case 'S': return kS;
+        case 'T': return kT;
+        case 'U': return kU;
+        default: return kBlank;
+    }
+}
+
+void appendLabel(std::vector<DebugVertex>& vertices,
+                 std::vector<uint16_t>& indices,
+                 const char* text,
+                 float centerX,
+                 float centerZ,
+                 float cellSize,
+                 const std::array<float, 3>& color) {
+    int length = 0;
+    while (text[length] != '\0') {
+        ++length;
+    }
+
+    const float glyphWidth = 5.0F * cellSize;
+    const float glyphHeight = 7.0F * cellSize;
+    const float glyphGap = cellSize;
+    const float totalWidth = (static_cast<float>(length) * glyphWidth) + (static_cast<float>(std::max(0, length - 1)) * glyphGap);
+    const float startX = centerX - (totalWidth * 0.5F);
+    const float startZ = centerZ - (glyphHeight * 0.5F);
+    constexpr float kTextY = 0.045F;
+
+    for (int glyph = 0; glyph < length; ++glyph) {
+        const std::array<uint8_t, 7>& rows = glyphRows(text[glyph]);
+        const float glyphX = startX + (static_cast<float>(glyph) * (glyphWidth + glyphGap));
+        for (int row = 0; row < 7; ++row) {
+            for (int col = 0; col < 5; ++col) {
+                const bool enabled = ((rows[row] >> (4 - col)) & 0x1U) != 0U;
+                if (!enabled) {
+                    continue;
+                }
+                const float x0 = glyphX + (static_cast<float>(col) * cellSize);
+                const float z0 = startZ + (static_cast<float>(6 - row) * cellSize);
+                appendQuad(vertices, indices, x0, z0, x0 + (cellSize * 0.82F), z0 + (cellSize * 0.82F), kTextY, color);
+            }
+        }
+    }
+}
+
+void buildDebugOrientationSquare(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
+    vertices.clear();
+    indices.clear();
+    vertices.reserve(512);
+    indices.reserve(768);
+
+    // 6x6 orientation square on the XZ plane. These colors are intentionally
+    // diagnostic, not final art: they make camera orbit/zoom direction obvious.
+    appendQuad(vertices, indices, -3.0F, 0.0F, 3.0F, 6.0F, 0.0F, { 0.075F, 0.082F, 0.092F });
+    appendQuad(vertices, indices, -3.0F, 0.0F, -1.0F, 6.0F, 0.012F, { 0.02F, 0.12F, 0.55F }); // SOL
+    appendQuad(vertices, indices, 1.0F, 0.0F, 3.0F, 6.0F, 0.014F, { 0.70F, 0.48F, 0.03F });  // SAG
+    appendQuad(vertices, indices, -1.0F, 4.0F, 1.0F, 6.0F, 0.016F, { 0.42F, 0.06F, 0.62F }); // UST
+    appendQuad(vertices, indices, -1.0F, 0.0F, 1.0F, 2.0F, 0.018F, { 0.03F, 0.38F, 0.09F }); // ALT
+    appendQuad(vertices, indices, -1.0F, 2.0F, 1.0F, 4.0F, 0.020F, { 0.13F, 0.14F, 0.16F }); // center
+
+    // Thin bright separators so the square reads as zones even on small phones.
+    appendQuad(vertices, indices, -1.03F, 0.0F, -0.97F, 6.0F, 0.030F, { 0.78F, 0.84F, 0.92F });
+    appendQuad(vertices, indices, 0.97F, 0.0F, 1.03F, 6.0F, 0.030F, { 0.78F, 0.84F, 0.92F });
+    appendQuad(vertices, indices, -3.0F, 1.97F, 3.0F, 2.03F, 0.030F, { 0.78F, 0.84F, 0.92F });
+    appendQuad(vertices, indices, -3.0F, 3.97F, 3.0F, 4.03F, 0.030F, { 0.78F, 0.84F, 0.92F });
+
+    appendLabel(vertices, indices, "SOL", -2.0F, 3.0F, 0.105F, { 1.0F, 1.0F, 1.0F });
+    appendLabel(vertices, indices, "SAG", 2.0F, 3.0F, 0.105F, { 0.05F, 0.04F, 0.02F });
+    appendLabel(vertices, indices, "UST", 0.0F, 5.0F, 0.105F, { 1.0F, 1.0F, 1.0F });
+    appendLabel(vertices, indices, "ALT", 0.0F, 1.0F, 0.105F, { 1.0F, 1.0F, 1.0F });
+}
 
 const char* vkResultName(VkResult result) {
     switch (result) {
@@ -433,8 +529,12 @@ bool VulkanRenderer::createLogicalDevice() {
 }
 
 bool VulkanRenderer::createDebugMeshResources() {
-    const VkDeviceSize vertexBufferSize = sizeof(DebugVertex) * kDebugRoadPlateVertices.size();
-    const VkDeviceSize indexBufferSize = sizeof(uint16_t) * kDebugRoadPlateIndices.size();
+    std::vector<DebugVertex> vertices;
+    std::vector<uint16_t> indices;
+    buildDebugOrientationSquare(vertices, indices);
+
+    const VkDeviceSize vertexBufferSize = sizeof(DebugVertex) * vertices.size();
+    const VkDeviceSize indexBufferSize = sizeof(uint16_t) * indices.size();
 
     if (!createBuffer(vertexBufferSize,
                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -447,7 +547,7 @@ bool VulkanRenderer::createDebugMeshResources() {
     if (!checkResult(vkMapMemory(device_, debugVertexBuffer_.memory, 0, vertexBufferSize, 0, &vertexData), "vkMapMemory(vertex)")) {
         return false;
     }
-    std::memcpy(vertexData, kDebugRoadPlateVertices.data(), static_cast<size_t>(vertexBufferSize));
+    std::memcpy(vertexData, vertices.data(), static_cast<size_t>(vertexBufferSize));
     vkUnmapMemory(device_, debugVertexBuffer_.memory);
 
     if (!createBuffer(indexBufferSize,
@@ -461,11 +561,11 @@ bool VulkanRenderer::createDebugMeshResources() {
     if (!checkResult(vkMapMemory(device_, debugIndexBuffer_.memory, 0, indexBufferSize, 0, &indexData), "vkMapMemory(index)")) {
         return false;
     }
-    std::memcpy(indexData, kDebugRoadPlateIndices.data(), static_cast<size_t>(indexBufferSize));
+    std::memcpy(indexData, indices.data(), static_cast<size_t>(indexBufferSize));
     vkUnmapMemory(device_, debugIndexBuffer_.memory);
 
-    debugIndexCount_ = static_cast<uint32_t>(kDebugRoadPlateIndices.size());
-    RF_LOGI("Debug mesh resources created: vertices=%zu indices=%u", kDebugRoadPlateVertices.size(), debugIndexCount_);
+    debugIndexCount_ = static_cast<uint32_t>(indices.size());
+    RF_LOGI("Debug orientation square resources created: vertices=%zu indices=%u", vertices.size(), debugIndexCount_);
     return true;
 }
 
@@ -1022,7 +1122,7 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         const math::Mat4 model = math::transformToMat4(debugRoadTransform_);
         const math::Mat4 viewProjection = math::multiply(projection, view);
         const math::Frustum frustum = math::extractFrustum(viewProjection);
-        const bool roadVisible = math::sphereInsideFrustum(frustum, {0.0F, 0.0F, 4.0F}, 1000.0F);
+        const bool roadVisible = math::sphereInsideFrustum(frustum, {0.0F, 0.0F, 3.0F}, 1000.0F);
         const math::Mat4 mvp = math::multiply(viewProjection, model);
         PushConstants pushConstants{};
         std::memcpy(pushConstants.mvp, mvp.data(), sizeof(pushConstants.mvp));

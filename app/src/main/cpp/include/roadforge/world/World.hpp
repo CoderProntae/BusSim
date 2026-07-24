@@ -42,7 +42,7 @@ struct CameraControlInput final {
 
 struct DebugCamera final {
     math::Vec3 eye{ 0.0F, 1.65F, -4.25F };
-    math::Vec3 target{ 0.0F, 0.0F, 3.4F };
+    math::Vec3 target{ 0.0F, 0.0F, 3.0F };
     math::Vec3 up{ 0.0F, 1.0F, 0.0F };
     float fovYRadians = 60.0F * 0.01745329252F;
 };

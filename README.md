@@ -20,7 +20,7 @@ Beklenen davranış:
 
 - Uygulama landscape tam ekran açılır.
 - Vulkan 1.1 destekli cihazda koyu lacivert arka plan görünür.
-- Ortada depth buffer ve perspektif kamera ile çizilen koyu debug yol plakası görünür.
+- Ortada depth buffer ve perspektif kamera ile çizilen yön etiketli kare diagnostic mesh görünür: SOL, SAG, UST, ALT.
 - Ekrana dokununca kısa turuncu pulse görünür.
 - Alt sağ dokunma parlak yeşil, alt sol dokunma parlak kırmızı, sol/sağ dokunma parlak mavi/sarı-turuncu diagnostic geri bildirimi verir ve yaklaşık 1.25 saniye ekranda kalır.
 - Pause/resume ve Surface yeniden oluşturma durumlarında Vulkan kaynakları güvenli kapatılıp yeniden kurulur.
@@ -76,7 +76,8 @@ Beklenen davranış:
     ├── 11_FAZ1_TRANSFORM_FRUSTUM.md
     ├── 12_FAZ1_RESOURCE_RAII.md
     ├── 13_FAZ1_WORLD_ECS.md
-    └── 14_FAZ1_CAMERA_CONTROLLER.md
+    ├── 14_FAZ1_CAMERA_CONTROLLER.md
+    └── 15_FAZ1_ORIENTATION_SQUARE.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -87,7 +88,7 @@ Beklenen davranış:
 4. Workflow başarılı olursa artifact olarak `roadforge-bussim-debug-apk` indir.
 5. ZIP içinden `app-debug.apk` dosyasını telefona çıkar.
 6. Android telefonda “bilinmeyen uygulama yükleme” izni verip APK'yı kur.
-7. Beklenen sonuç: lacivert Vulkan arka planı, ortada debug yol plakası, dokununca turuncu pulse; alt sağ parlak yeşil, alt sol parlak kırmızı input diagnostic rengi.
+7. Beklenen sonuç: lacivert Vulkan arka planı, ortada SOL/SAG/UST/ALT etiketli kare, dokununca turuncu pulse; alt sağ parlak yeşil, alt sol parlak kırmızı input diagnostic rengi.
 
 > Not: Arena'nın GitHub bağlantısında `workflows` yetkisi olmadığı için workflow dosyasını otomatik push edemedim. Kod branch'e push edildi; workflow içeriği `docs/03_GITHUB_ACTIONS_TELEFON_APK.md` içinde hazırdır.
 
@@ -110,7 +111,7 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti ve ilk debug kamera controller bağlantısı. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı ve yön etiketli orientation square diagnostic mesh. Sıradaki parçalar:
 
 1. Debug overlay / frame stats görsel yüzeyi.
 2. Basit 3D otobüs/yol debug sahnesi.

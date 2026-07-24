@@ -127,7 +127,7 @@ void World::fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& came
         cameraDistance_ = std::clamp(cameraDistance_, 3.25F, 10.5F);
     }
 
-    debugCamera_.target = { 0.0F, 0.0F, 3.4F };
+    debugCamera_.target = { 0.0F, 0.0F, 3.0F };
     debugCamera_.up = { 0.0F, 1.0F, 0.0F };
     debugCamera_.fovYRadians = 60.0F * 0.01745329252F;
     debugCamera_.eye = {
@@ -141,8 +141,8 @@ void World::fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& came
         return;
     }
 
-    const float yawRadians = std::sin(static_cast<float>(simulationSeconds_) * 0.65F) * 0.025F;
-    roadTransform->transform.rotation = math::quatFromAxisAngle({ 0.0F, 1.0F, 0.0F }, yawRadians);
+    // Keep the diagnostic square itself stable. When the perspective changes, it is the camera moving, not the road/square spinning.
+    roadTransform->transform.rotation = math::quatIdentity();
     debugRoadTransformCache_ = roadTransform->transform;
 }
 
