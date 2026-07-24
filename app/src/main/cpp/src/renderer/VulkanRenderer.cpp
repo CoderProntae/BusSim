@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -25,6 +26,23 @@ constexpr std::array<const char*, 2> kInstanceExtensions = {
 
 constexpr std::array<const char*, 1> kDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+};
+
+struct DebugVertex final {
+    float position[2];
+    float color[3];
+};
+
+constexpr std::array<DebugVertex, 4> kDebugRoadPlateVertices = {
+    DebugVertex{{-0.82F, -0.48F}, {0.08F, 0.10F, 0.12F}},
+    DebugVertex{{ 0.82F, -0.48F}, {0.10F, 0.12F, 0.14F}},
+    DebugVertex{{ 0.46F,  0.56F}, {0.18F, 0.20F, 0.22F}},
+    DebugVertex{{-0.46F,  0.56F}, {0.16F, 0.18F, 0.20F}},
+};
+
+constexpr std::array<uint16_t, 6> kDebugRoadPlateIndices = {
+    0, 1, 2,
+    2, 3, 0,
 };
 
 const char* vkResultName(VkResult result) {
@@ -84,6 +102,7 @@ bool VulkanRenderer::initialize(ANativeWindow* window) {
         || !createSurface(window_)
         || !pickPhysicalDevice()
         || !createLogicalDevice()
+        || !createDebugMeshResources()
         || !createSwapchain()
         || !createImageViews()
         || !createRenderPass()
@@ -107,6 +126,7 @@ void VulkanRenderer::shutdown() {
     }
 
     cleanupSwapchain();
+    cleanupDebugMeshResources();
 
     for (VkSemaphore semaphore : renderFinishedSemaphores_) {
         if (semaphore != VK_NULL_HANDLE) {
@@ -388,6 +408,45 @@ bool VulkanRenderer::createLogicalDevice() {
     return true;
 }
 
+bool VulkanRenderer::createDebugMeshResources() {
+    const VkDeviceSize vertexBufferSize = sizeof(DebugVertex) * kDebugRoadPlateVertices.size();
+    const VkDeviceSize indexBufferSize = sizeof(uint16_t) * kDebugRoadPlateIndices.size();
+
+    if (!createBuffer(vertexBufferSize,
+                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      debugVertexBuffer_,
+                      debugVertexBufferMemory_)) {
+        return false;
+    }
+
+    void* vertexData = nullptr;
+    if (!checkResult(vkMapMemory(device_, debugVertexBufferMemory_, 0, vertexBufferSize, 0, &vertexData), "vkMapMemory(vertex)")) {
+        return false;
+    }
+    std::memcpy(vertexData, kDebugRoadPlateVertices.data(), static_cast<size_t>(vertexBufferSize));
+    vkUnmapMemory(device_, debugVertexBufferMemory_);
+
+    if (!createBuffer(indexBufferSize,
+                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      debugIndexBuffer_,
+                      debugIndexBufferMemory_)) {
+        return false;
+    }
+
+    void* indexData = nullptr;
+    if (!checkResult(vkMapMemory(device_, debugIndexBufferMemory_, 0, indexBufferSize, 0, &indexData), "vkMapMemory(index)")) {
+        return false;
+    }
+    std::memcpy(indexData, kDebugRoadPlateIndices.data(), static_cast<size_t>(indexBufferSize));
+    vkUnmapMemory(device_, debugIndexBufferMemory_);
+
+    debugIndexCount_ = static_cast<uint32_t>(kDebugRoadPlateIndices.size());
+    RF_LOGI("Debug mesh resources created: vertices=%zu indices=%u", kDebugRoadPlateVertices.size(), debugIndexCount_);
+    return true;
+}
+
 bool VulkanRenderer::createSwapchain() {
     const SwapchainSupport support = querySwapchainSupport(physicalDevice_);
     if (support.formats.empty() || support.presentModes.empty()) {
@@ -551,8 +610,27 @@ bool VulkanRenderer::createGraphicsPipeline() {
 
     const VkPipelineShaderStageCreateInfo shaderStages[] = { vertexStage, fragmentStage };
 
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(DebugVertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(DebugVertex, position);
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(DebugVertex, color);
+
     VkPipelineVertexInputStateCreateInfo vertexInput{};
     vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInput.vertexBindingDescriptionCount = 1;
+    vertexInput.pVertexBindingDescriptions = &bindingDescription;
+    vertexInput.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInput.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -719,6 +797,30 @@ bool VulkanRenderer::createSyncObjects() {
     return true;
 }
 
+void VulkanRenderer::cleanupDebugMeshResources() {
+    if (device_ == VK_NULL_HANDLE) {
+        return;
+    }
+
+    if (debugIndexBuffer_ != VK_NULL_HANDLE) {
+        vkDestroyBuffer(device_, debugIndexBuffer_, nullptr);
+        debugIndexBuffer_ = VK_NULL_HANDLE;
+    }
+    if (debugIndexBufferMemory_ != VK_NULL_HANDLE) {
+        vkFreeMemory(device_, debugIndexBufferMemory_, nullptr);
+        debugIndexBufferMemory_ = VK_NULL_HANDLE;
+    }
+    if (debugVertexBuffer_ != VK_NULL_HANDLE) {
+        vkDestroyBuffer(device_, debugVertexBuffer_, nullptr);
+        debugVertexBuffer_ = VK_NULL_HANDLE;
+    }
+    if (debugVertexBufferMemory_ != VK_NULL_HANDLE) {
+        vkFreeMemory(device_, debugVertexBufferMemory_, nullptr);
+        debugVertexBufferMemory_ = VK_NULL_HANDLE;
+    }
+    debugIndexCount_ = 0;
+}
+
 void VulkanRenderer::cleanupSwapchain() {
     for (VkFramebuffer framebuffer : framebuffers_) {
         if (framebuffer != VK_NULL_HANDLE) {
@@ -824,9 +926,13 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     renderPassInfo.pClearValues = &clearColor;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    if (graphicsPipeline_ != VK_NULL_HANDLE) {
+    if (graphicsPipeline_ != VK_NULL_HANDLE && debugVertexBuffer_ != VK_NULL_HANDLE && debugIndexBuffer_ != VK_NULL_HANDLE) {
+        const VkBuffer vertexBuffers[] = { debugVertexBuffer_ };
+        const VkDeviceSize offsets[] = { 0 };
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffer, debugIndexBuffer_, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(commandBuffer, debugIndexCount_, 1, 0, 0, 0);
     }
     vkCmdEndRenderPass(commandBuffer);
 
@@ -849,6 +955,62 @@ VkShaderModule VulkanRenderer::createShaderModule(const uint8_t* code, size_t si
         return VK_NULL_HANDLE;
     }
     return shaderModule;
+}
+
+bool VulkanRenderer::createBuffer(VkDeviceSize size,
+                                  VkBufferUsageFlags usage,
+                                  VkMemoryPropertyFlags properties,
+                                  VkBuffer& buffer,
+                                  VkDeviceMemory& memory) const {
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (!checkResult(vkCreateBuffer(device_, &bufferInfo, nullptr, &buffer), "vkCreateBuffer")) {
+        return false;
+    }
+
+    VkMemoryRequirements memoryRequirements{};
+    vkGetBufferMemoryRequirements(device_, buffer, &memoryRequirements);
+
+    VkMemoryAllocateInfo allocationInfo{};
+    allocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocationInfo.allocationSize = memoryRequirements.size;
+    allocationInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
+
+    if (!checkResult(vkAllocateMemory(device_, &allocationInfo, nullptr, &memory), "vkAllocateMemory(buffer)")) {
+        vkDestroyBuffer(device_, buffer, nullptr);
+        buffer = VK_NULL_HANDLE;
+        return false;
+    }
+
+    if (!checkResult(vkBindBufferMemory(device_, buffer, memory, 0), "vkBindBufferMemory")) {
+        vkFreeMemory(device_, memory, nullptr);
+        memory = VK_NULL_HANDLE;
+        vkDestroyBuffer(device_, buffer, nullptr);
+        buffer = VK_NULL_HANDLE;
+        return false;
+    }
+
+    return true;
+}
+
+uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
+    VkPhysicalDeviceMemoryProperties memoryProperties{};
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice_, &memoryProperties);
+
+    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
+        const bool typeMatches = (typeFilter & (1U << i)) != 0U;
+        const bool propertiesMatch = (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties;
+        if (typeMatches && propertiesMatch) {
+            return i;
+        }
+    }
+
+    RF_LOGE("Failed to find suitable Vulkan memory type, typeFilter=%u properties=%u", typeFilter, properties);
+    return 0;
 }
 
 bool VulkanRenderer::isDeviceSuitable(VkPhysicalDevice device) const {

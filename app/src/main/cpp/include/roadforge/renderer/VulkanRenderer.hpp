@@ -52,6 +52,7 @@ private:
     bool createSurface(ANativeWindow* window);
     bool pickPhysicalDevice();
     bool createLogicalDevice();
+    bool createDebugMeshResources();
     bool createSwapchain();
     bool createImageViews();
     bool createRenderPass();
@@ -61,10 +62,13 @@ private:
     bool createCommandBuffers();
     bool createSyncObjects();
 
+    void cleanupDebugMeshResources();
     void cleanupSwapchain();
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
+    [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& memory) const;
+    [[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
     [[nodiscard]] bool isDeviceSuitable(VkPhysicalDevice device) const;
     [[nodiscard]] QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
@@ -104,6 +108,11 @@ private:
     VkPipelineLayout pipelineLayout_ = VK_NULL_HANDLE;
     VkPipeline graphicsPipeline_ = VK_NULL_HANDLE;
     VkCommandPool commandPool_ = VK_NULL_HANDLE;
+    VkBuffer debugVertexBuffer_ = VK_NULL_HANDLE;
+    VkDeviceMemory debugVertexBufferMemory_ = VK_NULL_HANDLE;
+    VkBuffer debugIndexBuffer_ = VK_NULL_HANDLE;
+    VkDeviceMemory debugIndexBufferMemory_ = VK_NULL_HANDLE;
+    uint32_t debugIndexCount_ = 0;
 
     std::vector<VkImage> swapchainImages_;
     std::vector<VkImageView> swapchainImageViews_;

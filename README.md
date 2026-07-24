@@ -96,7 +96,7 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı ve ilk shader tabanlı Vulkan üçgen çizimi. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim ve ilk vertex/index buffer debug mesh. Sıradaki parçalar:
 
 1. Core altyapı: assert, result/error, zamanlayıcı, profiler iskeleti.
 2. Math: vector/matrix/quaternion.
