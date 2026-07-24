@@ -168,6 +168,13 @@ void VulkanRenderer::setTouchPulse(float seconds) {
     touchPulseSeconds_ = std::max(touchPulseSeconds_, seconds);
 }
 
+void VulkanRenderer::setInputDebug(float steering, float throttle, float brake, bool touchActive) {
+    debugSteering_ = std::clamp(steering, -1.0F, 1.0F);
+    debugThrottle_ = std::clamp(throttle, 0.0F, 1.0F);
+    debugBrake_ = std::clamp(brake, 0.0F, 1.0F);
+    debugTouchActive_ = touchActive;
+}
+
 void VulkanRenderer::setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha) {
     appTimeSeconds_ = appTimeSeconds;
     simulationTick_ = simulationTick;
@@ -647,10 +654,13 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     const float fixedTickPhase = static_cast<float>(simulationTick_ % 60U) / 60.0F;
     const float interpolation = static_cast<float>(interpolationAlpha_);
 
+    const float steerLeft = std::max(0.0F, -debugSteering_);
+    const float steerRight = std::max(0.0F, debugSteering_);
+    const float activeTint = debugTouchActive_ ? 0.018F : 0.0F;
     const math::Vec4 base = {
-        0.016F + (0.006F * fixedTickPhase),
-        0.044F + (0.020F * breathe),
-        0.082F + (0.018F * interpolation),
+        0.016F + (0.006F * fixedTickPhase) + (0.030F * debugBrake_) + (0.018F * steerRight),
+        0.044F + (0.020F * breathe) + (0.032F * debugThrottle_) + activeTint,
+        0.082F + (0.018F * interpolation) + (0.020F * steerLeft),
         1.0F,
     };
     const math::Vec4 touch = { 0.95F, 0.38F, 0.06F, 1.0F };

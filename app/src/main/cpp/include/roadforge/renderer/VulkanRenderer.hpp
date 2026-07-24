@@ -24,6 +24,7 @@ public:
 
     void onSurfaceChanged(int32_t width, int32_t height);
     void setTouchPulse(float seconds);
+    void setInputDebug(float steering, float throttle, float brake, bool touchActive);
     void setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha);
     void tick(float deltaSeconds);
     void drawFrame();
@@ -80,6 +81,10 @@ private:
     double appTimeSeconds_ = 0.0;
     double interpolationAlpha_ = 0.0;
     uint64_t simulationTick_ = 0;
+    float debugSteering_ = 0.0F;
+    float debugThrottle_ = 0.0F;
+    float debugBrake_ = 0.0F;
+    bool debugTouchActive_ = false;
 
     ANativeWindow* window_ = nullptr;
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include "roadforge/core/FrameStats.hpp"
 #include "roadforge/core/SimulationClock.hpp"
+#include "roadforge/input/InputSystem.hpp"
 #include "roadforge/renderer/VulkanRenderer.hpp"
 
 #include <android/native_window.h>
@@ -34,8 +36,12 @@ private:
     std::mutex mutex_;
     renderer::VulkanRenderer renderer_;
     core::SimulationClock simulationClock_;
+    core::FrameStats frameStats_;
+    input::InputSystem inputSystem_;
     ANativeWindow* window_ = nullptr;
     bool paused_ = true;
+    int32_t surfaceWidth_ = 1;
+    int32_t surfaceHeight_ = 1;
     int64_t previousFrameTimeNanos_ = 0;
     double appTimeSeconds_ = 0.0;
     uint64_t fixedUpdateCounter_ = 0;
