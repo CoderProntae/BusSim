@@ -7,8 +7,8 @@
 namespace roadforge::engine {
 
 namespace {
-constexpr float kNanosToSeconds = 1.0F / 1'000'000'000.0F;
-constexpr float kMaxDeltaSeconds = 1.0F / 15.0F;
+constexpr double kNanosToSeconds = 1.0 / 1'000'000'000.0;
+constexpr double kMaxDeltaSeconds = 1.0 / 15.0;
 } // namespace
 
 Engine::Engine() {
@@ -34,6 +34,10 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     }
 
     previousFrameTimeNanos_ = 0;
+    simulationClock_.reset();
+    appTimeSeconds_ = 0.0;
+    fixedUpdateCounter_ = 0;
+    droppedTimeEvents_ = 0;
     if (!renderer_.initialize(window_)) {
         RF_LOGE("Vulkan renderer initialization failed");
         renderer_.shutdown();
@@ -79,14 +83,26 @@ void Engine::frame(int64_t frameTimeNanos) {
         return;
     }
 
-    float deltaSeconds = 1.0F / 60.0F;
+    double deltaSeconds = 1.0 / 60.0;
     if (previousFrameTimeNanos_ > 0) {
-        deltaSeconds = static_cast<float>(frameTimeNanos - previousFrameTimeNanos_) * kNanosToSeconds;
-        deltaSeconds = std::clamp(deltaSeconds, 0.0F, kMaxDeltaSeconds);
+        deltaSeconds = static_cast<double>(frameTimeNanos - previousFrameTimeNanos_) * kNanosToSeconds;
+        deltaSeconds = std::clamp(deltaSeconds, 0.0, kMaxDeltaSeconds);
     }
     previousFrameTimeNanos_ = frameTimeNanos;
+    appTimeSeconds_ += deltaSeconds;
 
-    renderer_.tick(deltaSeconds);
+    const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
+    for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
+        ++fixedUpdateCounter_;
+    }
+
+    if (simulationStep.droppedExcessTime) {
+        ++droppedTimeEvents_;
+        RF_LOGW("Simulation clock dropped excess accumulated time; count=%llu", static_cast<unsigned long long>(droppedTimeEvents_));
+    }
+
+    renderer_.setSimulationTiming(appTimeSeconds_, fixedUpdateCounter_, simulationStep.interpolationAlpha);
+    renderer_.tick(static_cast<float>(deltaSeconds));
     renderer_.drawFrame();
 }
 

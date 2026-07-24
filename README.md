@@ -2,7 +2,7 @@
 
 RoadForge Bus Sim, Android mobil cihazlar için C++20 + Vulkan tabanlı özel oyun motoru üzerine geliştirilen 3D otobüs simülasyonu projesidir.
 
-Bu depo şu an **Faz 0 / native Vulkan bootstrap** durumundadır. Amaç henüz otobüs fiziği veya 3D dünya üretmek değil; Android telefon üzerinde gerçek native render yolunu doğrulamaktır.
+Bu depo şu an **Faz 1 başlangıcı** durumundadır. Faz 0 Android/Vulkan hattı gerçek cihazda doğrulandı; şimdi motor çekirdeği küçük ve test edilebilir parçalarla ekleniyor.
 
 ## Faz 0'da çalışan zincir
 
@@ -96,7 +96,7 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandıktan sonra Faz 1'e geçilecek:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için ilk eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları ve render tarafına simulation timing aktarımı. Sıradaki parçalar:
 
 1. Core altyapı: assert, result/error, zamanlayıcı, profiler iskeleti.
 2. Math: vector/matrix/quaternion.

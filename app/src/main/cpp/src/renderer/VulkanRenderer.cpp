@@ -1,11 +1,13 @@
 #include "roadforge/renderer/VulkanRenderer.hpp"
 
 #include "roadforge/core/Log.hpp"
+#include "roadforge/math/Vec.hpp"
 
 #include <vulkan/vulkan_android.h>
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -164,6 +166,12 @@ void VulkanRenderer::onSurfaceChanged(int32_t width, int32_t height) {
 
 void VulkanRenderer::setTouchPulse(float seconds) {
     touchPulseSeconds_ = std::max(touchPulseSeconds_, seconds);
+}
+
+void VulkanRenderer::setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha) {
+    appTimeSeconds_ = appTimeSeconds;
+    simulationTick_ = simulationTick;
+    interpolationAlpha_ = std::clamp(interpolationAlpha, 0.0, 1.0);
 }
 
 void VulkanRenderer::tick(float deltaSeconds) {
@@ -635,14 +643,24 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     }
 
     const float pulse = std::clamp(touchPulseSeconds_ / 0.22F, 0.0F, 1.0F);
-    const std::array<float, 4> base = { 0.018F, 0.052F, 0.090F, 1.0F };
-    const std::array<float, 4> touch = { 0.95F, 0.38F, 0.06F, 1.0F };
+    const float breathe = 0.5F + (0.5F * std::sin(static_cast<float>(appTimeSeconds_) * 1.8F));
+    const float fixedTickPhase = static_cast<float>(simulationTick_ % 60U) / 60.0F;
+    const float interpolation = static_cast<float>(interpolationAlpha_);
+
+    const math::Vec4 base = {
+        0.016F + (0.006F * fixedTickPhase),
+        0.044F + (0.020F * breathe),
+        0.082F + (0.018F * interpolation),
+        1.0F,
+    };
+    const math::Vec4 touch = { 0.95F, 0.38F, 0.06F, 1.0F };
+    const math::Vec4 finalColor = math::lerp(base, touch, pulse);
 
     VkClearValue clearColor{};
-    clearColor.color.float32[0] = base[0] * (1.0F - pulse) + touch[0] * pulse;
-    clearColor.color.float32[1] = base[1] * (1.0F - pulse) + touch[1] * pulse;
-    clearColor.color.float32[2] = base[2] * (1.0F - pulse) + touch[2] * pulse;
-    clearColor.color.float32[3] = 1.0F;
+    clearColor.color.float32[0] = finalColor.x;
+    clearColor.color.float32[1] = finalColor.y;
+    clearColor.color.float32[2] = finalColor.z;
+    clearColor.color.float32[3] = finalColor.w;
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

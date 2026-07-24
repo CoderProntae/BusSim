@@ -1,5 +1,6 @@
 #pragma once
 
+#include "roadforge/core/SimulationClock.hpp"
 #include "roadforge/renderer/VulkanRenderer.hpp"
 
 #include <android/native_window.h>
@@ -32,9 +33,13 @@ private:
 
     std::mutex mutex_;
     renderer::VulkanRenderer renderer_;
+    core::SimulationClock simulationClock_;
     ANativeWindow* window_ = nullptr;
     bool paused_ = true;
     int64_t previousFrameTimeNanos_ = 0;
+    double appTimeSeconds_ = 0.0;
+    uint64_t fixedUpdateCounter_ = 0;
+    uint64_t droppedTimeEvents_ = 0;
 };
 
 } // namespace roadforge::engine

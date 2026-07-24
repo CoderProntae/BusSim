@@ -3,6 +3,7 @@ project(roadforge_bussim LANGUAGES CXX)
 
 add_library(roadforge SHARED
     src/core/Log.cpp
+    src/core/SimulationClock.cpp
     src/engine/Engine.cpp
     src/platform/android/JniBridge.cpp
     src/renderer/VulkanRenderer.cpp

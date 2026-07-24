@@ -24,6 +24,7 @@ public:
 
     void onSurfaceChanged(int32_t width, int32_t height);
     void setTouchPulse(float seconds);
+    void setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha);
     void tick(float deltaSeconds);
     void drawFrame();
 
@@ -76,6 +77,9 @@ private:
     int32_t requestedWidth_ = 0;
     int32_t requestedHeight_ = 0;
     float touchPulseSeconds_ = 0.0F;
+    double appTimeSeconds_ = 0.0;
+    double interpolationAlpha_ = 0.0;
+    uint64_t simulationTick_ = 0;
 
     ANativeWindow* window_ = nullptr;
 
