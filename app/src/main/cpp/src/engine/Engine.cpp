@@ -112,8 +112,9 @@ void Engine::frame(int64_t frameTimeNanos) {
     appTimeSeconds_ += deltaSeconds;
 
     const input::InputSnapshot& input = inputSystem_.snapshot();
+    const bool zoomInputActive = input.throttle > 0.5F || input.brake > 0.5F;
     const world::CameraControlInput cameraInput{
-        input.steering,
+        zoomInputActive ? 0.0F : input.steering,
         input.throttle,
         input.brake,
         input.primaryTouchDown,
