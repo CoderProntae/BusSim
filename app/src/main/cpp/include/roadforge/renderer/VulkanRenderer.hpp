@@ -3,6 +3,8 @@
 #include <android/native_window.h>
 #include <vulkan/vulkan.h>
 
+#include "roadforge/renderer/VulkanResources.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -69,8 +71,8 @@ private:
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
-    [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& memory) const;
-    [[nodiscard]] bool createImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& memory) const;
+    [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, DeviceBuffer& output) const;
+    [[nodiscard]] bool createImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, DeviceImage& output) const;
     [[nodiscard]] VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) const;
     [[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
     [[nodiscard]] VkFormat chooseDepthFormat() const;
@@ -111,17 +113,13 @@ private:
     VkFormat swapchainImageFormat_ = VK_FORMAT_UNDEFINED;
     VkExtent2D swapchainExtent_{};
     VkFormat depthFormat_ = VK_FORMAT_UNDEFINED;
-    VkImage depthImage_ = VK_NULL_HANDLE;
-    VkDeviceMemory depthImageMemory_ = VK_NULL_HANDLE;
-    VkImageView depthImageView_ = VK_NULL_HANDLE;
+    DeviceImage depthImage_;
     VkRenderPass renderPass_ = VK_NULL_HANDLE;
     VkPipelineLayout pipelineLayout_ = VK_NULL_HANDLE;
     VkPipeline graphicsPipeline_ = VK_NULL_HANDLE;
     VkCommandPool commandPool_ = VK_NULL_HANDLE;
-    VkBuffer debugVertexBuffer_ = VK_NULL_HANDLE;
-    VkDeviceMemory debugVertexBufferMemory_ = VK_NULL_HANDLE;
-    VkBuffer debugIndexBuffer_ = VK_NULL_HANDLE;
-    VkDeviceMemory debugIndexBufferMemory_ = VK_NULL_HANDLE;
+    DeviceBuffer debugVertexBuffer_;
+    DeviceBuffer debugIndexBuffer_;
     uint32_t debugIndexCount_ = 0;
 
     std::vector<VkImage> swapchainImages_;

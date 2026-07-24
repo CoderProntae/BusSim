@@ -428,32 +428,30 @@ bool VulkanRenderer::createDebugMeshResources() {
     if (!createBuffer(vertexBufferSize,
                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      debugVertexBuffer_,
-                      debugVertexBufferMemory_)) {
+                      debugVertexBuffer_)) {
         return false;
     }
 
     void* vertexData = nullptr;
-    if (!checkResult(vkMapMemory(device_, debugVertexBufferMemory_, 0, vertexBufferSize, 0, &vertexData), "vkMapMemory(vertex)")) {
+    if (!checkResult(vkMapMemory(device_, debugVertexBuffer_.memory, 0, vertexBufferSize, 0, &vertexData), "vkMapMemory(vertex)")) {
         return false;
     }
     std::memcpy(vertexData, kDebugRoadPlateVertices.data(), static_cast<size_t>(vertexBufferSize));
-    vkUnmapMemory(device_, debugVertexBufferMemory_);
+    vkUnmapMemory(device_, debugVertexBuffer_.memory);
 
     if (!createBuffer(indexBufferSize,
                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      debugIndexBuffer_,
-                      debugIndexBufferMemory_)) {
+                      debugIndexBuffer_)) {
         return false;
     }
 
     void* indexData = nullptr;
-    if (!checkResult(vkMapMemory(device_, debugIndexBufferMemory_, 0, indexBufferSize, 0, &indexData), "vkMapMemory(index)")) {
+    if (!checkResult(vkMapMemory(device_, debugIndexBuffer_.memory, 0, indexBufferSize, 0, &indexData), "vkMapMemory(index)")) {
         return false;
     }
     std::memcpy(indexData, kDebugRoadPlateIndices.data(), static_cast<size_t>(indexBufferSize));
-    vkUnmapMemory(device_, debugIndexBufferMemory_);
+    vkUnmapMemory(device_, debugIndexBuffer_.memory);
 
     debugIndexCount_ = static_cast<uint32_t>(kDebugRoadPlateIndices.size());
     RF_LOGI("Debug mesh resources created: vertices=%zu indices=%u", kDebugRoadPlateVertices.size(), debugIndexCount_);
@@ -563,13 +561,12 @@ bool VulkanRenderer::createDepthResources() {
                      depthFormat_,
                      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                     depthImage_,
-                     depthImageMemory_)) {
+                     depthImage_)) {
         return false;
     }
 
-    depthImageView_ = createImageView(depthImage_, depthFormat_, VK_IMAGE_ASPECT_DEPTH_BIT);
-    return depthImageView_ != VK_NULL_HANDLE;
+    depthImage_.view = createImageView(depthImage_.image, depthFormat_, VK_IMAGE_ASPECT_DEPTH_BIT);
+    return depthImage_.view != VK_NULL_HANDLE;
 }
 
 bool VulkanRenderer::createRenderPass() {
@@ -796,7 +793,7 @@ bool VulkanRenderer::createFramebuffers() {
     framebuffers_.resize(swapchainImageViews_.size(), VK_NULL_HANDLE);
 
     for (size_t i = 0; i < swapchainImageViews_.size(); ++i) {
-        const VkImageView attachments[] = { swapchainImageViews_[i], depthImageView_ };
+        const VkImageView attachments[] = { swapchainImageViews_[i], depthImage_.view };
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -864,46 +861,13 @@ bool VulkanRenderer::createSyncObjects() {
 }
 
 void VulkanRenderer::cleanupDebugMeshResources() {
-    if (device_ == VK_NULL_HANDLE) {
-        return;
-    }
-
-    if (debugIndexBuffer_ != VK_NULL_HANDLE) {
-        vkDestroyBuffer(device_, debugIndexBuffer_, nullptr);
-        debugIndexBuffer_ = VK_NULL_HANDLE;
-    }
-    if (debugIndexBufferMemory_ != VK_NULL_HANDLE) {
-        vkFreeMemory(device_, debugIndexBufferMemory_, nullptr);
-        debugIndexBufferMemory_ = VK_NULL_HANDLE;
-    }
-    if (debugVertexBuffer_ != VK_NULL_HANDLE) {
-        vkDestroyBuffer(device_, debugVertexBuffer_, nullptr);
-        debugVertexBuffer_ = VK_NULL_HANDLE;
-    }
-    if (debugVertexBufferMemory_ != VK_NULL_HANDLE) {
-        vkFreeMemory(device_, debugVertexBufferMemory_, nullptr);
-        debugVertexBufferMemory_ = VK_NULL_HANDLE;
-    }
+    debugIndexBuffer_.destroy();
+    debugVertexBuffer_.destroy();
     debugIndexCount_ = 0;
 }
 
 void VulkanRenderer::cleanupDepthResources() {
-    if (device_ == VK_NULL_HANDLE) {
-        return;
-    }
-
-    if (depthImageView_ != VK_NULL_HANDLE) {
-        vkDestroyImageView(device_, depthImageView_, nullptr);
-        depthImageView_ = VK_NULL_HANDLE;
-    }
-    if (depthImage_ != VK_NULL_HANDLE) {
-        vkDestroyImage(device_, depthImage_, nullptr);
-        depthImage_ = VK_NULL_HANDLE;
-    }
-    if (depthImageMemory_ != VK_NULL_HANDLE) {
-        vkFreeMemory(device_, depthImageMemory_, nullptr);
-        depthImageMemory_ = VK_NULL_HANDLE;
-    }
+    depthImage_.destroy();
     depthFormat_ = VK_FORMAT_UNDEFINED;
 }
 
@@ -1035,8 +999,8 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    if (graphicsPipeline_ != VK_NULL_HANDLE && debugVertexBuffer_ != VK_NULL_HANDLE && debugIndexBuffer_ != VK_NULL_HANDLE) {
-        const VkBuffer vertexBuffers[] = { debugVertexBuffer_ };
+    if (graphicsPipeline_ != VK_NULL_HANDLE && debugVertexBuffer_.valid() && debugIndexBuffer_.valid()) {
+        const VkBuffer vertexBuffers[] = { debugVertexBuffer_.buffer };
         const VkDeviceSize offsets[] = { 0 };
         const float aspect = swapchainExtent_.height > 0
             ? static_cast<float>(swapchainExtent_.width) / static_cast<float>(swapchainExtent_.height)
@@ -1063,7 +1027,7 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
         vkCmdPushConstants(commandBuffer, pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, debugIndexBuffer_, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(commandBuffer, debugIndexBuffer_.buffer, 0, VK_INDEX_TYPE_UINT16);
         vkCmdDrawIndexed(commandBuffer, debugIndexCount_, 1, 0, 0, 0);
     }
     vkCmdEndRenderPass(commandBuffer);
@@ -1092,14 +1056,16 @@ VkShaderModule VulkanRenderer::createShaderModule(const uint8_t* code, size_t si
 bool VulkanRenderer::createBuffer(VkDeviceSize size,
                                   VkBufferUsageFlags usage,
                                   VkMemoryPropertyFlags properties,
-                                  VkBuffer& buffer,
-                                  VkDeviceMemory& memory) const {
+                                  DeviceBuffer& output) const {
+    output.destroy();
+
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+    VkBuffer buffer = VK_NULL_HANDLE;
     if (!checkResult(vkCreateBuffer(device_, &bufferInfo, nullptr, &buffer), "vkCreateBuffer")) {
         return false;
     }
@@ -1112,20 +1078,22 @@ bool VulkanRenderer::createBuffer(VkDeviceSize size,
     allocationInfo.allocationSize = memoryRequirements.size;
     allocationInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
 
+    VkDeviceMemory memory = VK_NULL_HANDLE;
     if (!checkResult(vkAllocateMemory(device_, &allocationInfo, nullptr, &memory), "vkAllocateMemory(buffer)")) {
         vkDestroyBuffer(device_, buffer, nullptr);
-        buffer = VK_NULL_HANDLE;
         return false;
     }
 
     if (!checkResult(vkBindBufferMemory(device_, buffer, memory, 0), "vkBindBufferMemory")) {
         vkFreeMemory(device_, memory, nullptr);
-        memory = VK_NULL_HANDLE;
         vkDestroyBuffer(device_, buffer, nullptr);
-        buffer = VK_NULL_HANDLE;
         return false;
     }
 
+    output.device = device_;
+    output.buffer = buffer;
+    output.memory = memory;
+    output.size = size;
     return true;
 }
 
@@ -1134,8 +1102,9 @@ bool VulkanRenderer::createImage(uint32_t width,
                                  VkFormat format,
                                  VkImageUsageFlags usage,
                                  VkMemoryPropertyFlags properties,
-                                 VkImage& image,
-                                 VkDeviceMemory& memory) const {
+                                 DeviceImage& output) const {
+    output.destroy();
+
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -1151,6 +1120,7 @@ bool VulkanRenderer::createImage(uint32_t width,
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+    VkImage image = VK_NULL_HANDLE;
     if (!checkResult(vkCreateImage(device_, &imageInfo, nullptr, &image), "vkCreateImage")) {
         return false;
     }
@@ -1163,20 +1133,24 @@ bool VulkanRenderer::createImage(uint32_t width,
     allocationInfo.allocationSize = memoryRequirements.size;
     allocationInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties);
 
+    VkDeviceMemory memory = VK_NULL_HANDLE;
     if (!checkResult(vkAllocateMemory(device_, &allocationInfo, nullptr, &memory), "vkAllocateMemory(image)")) {
         vkDestroyImage(device_, image, nullptr);
-        image = VK_NULL_HANDLE;
         return false;
     }
 
     if (!checkResult(vkBindImageMemory(device_, image, memory, 0), "vkBindImageMemory")) {
         vkFreeMemory(device_, memory, nullptr);
-        memory = VK_NULL_HANDLE;
         vkDestroyImage(device_, image, nullptr);
-        image = VK_NULL_HANDLE;
         return false;
     }
 
+    output.device = device_;
+    output.image = image;
+    output.memory = memory;
+    output.format = format;
+    output.width = width;
+    output.height = height;
     return true;
 }
 

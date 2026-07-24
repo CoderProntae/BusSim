@@ -66,6 +66,7 @@ add_library(roadforge SHARED
     src/input/InputSystem.cpp
     src/platform/android/JniBridge.cpp
     src/renderer/VulkanRenderer.cpp
+    src/renderer/VulkanResources.cpp
 )
 
 add_dependencies(roadforge roadforge_shader_assets)
