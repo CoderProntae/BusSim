@@ -11,8 +11,8 @@ android {
         applicationId = "com.roadforge.bussim"
         minSdk = 29
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.1.8-faz1-resource-raii"
+        versionCode = 11
+        versionName = "0.1.9-faz1-world-ecs"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

@@ -1,0 +1,132 @@
+#include "roadforge/world/World.hpp"
+
+#include <algorithm>
+#include <cmath>
+
+namespace roadforge::world {
+
+void World::reset() {
+    slots_.clear();
+    freeList_.clear();
+    transforms_.clear();
+    meshes_.clear();
+    debugRoadEntity_ = {};
+    debugRoadTransformCache_ = {};
+    simulationSeconds_ = 0.0;
+}
+
+Entity World::createEntity() {
+    if (!freeList_.empty()) {
+        const uint32_t index = freeList_.back();
+        freeList_.pop_back();
+        slots_[index].alive = true;
+        return { index, slots_[index].generation };
+    }
+
+    const uint32_t index = static_cast<uint32_t>(slots_.size());
+    slots_.push_back({ 1, true });
+    transforms_.emplace_back(std::nullopt);
+    meshes_.emplace_back(std::nullopt);
+    return { index, 1 };
+}
+
+void World::destroyEntity(Entity entity) {
+    if (!alive(entity)) {
+        return;
+    }
+
+    Slot& slot = slots_[entity.index];
+    slot.alive = false;
+    ++slot.generation;
+    transforms_[entity.index].reset();
+    meshes_[entity.index].reset();
+    freeList_.push_back(entity.index);
+
+    if (debugRoadEntity_ == entity) {
+        debugRoadEntity_ = {};
+        debugRoadTransformCache_ = {};
+    }
+}
+
+bool World::alive(Entity entity) const {
+    return indexInRange(entity) && slots_[entity.index].alive && slots_[entity.index].generation == entity.generation;
+}
+
+TransformComponent& World::addTransform(Entity entity, const math::Transform& transformValue) {
+    if (!alive(entity)) {
+        entity = createEntity();
+    }
+    transforms_[entity.index] = TransformComponent{ transformValue };
+    return transforms_[entity.index].value();
+}
+
+MeshComponent& World::addMesh(Entity entity, const MeshComponent& meshValue) {
+    if (!alive(entity)) {
+        entity = createEntity();
+    }
+    meshes_[entity.index] = meshValue;
+    return meshes_[entity.index].value();
+}
+
+TransformComponent* World::transform(Entity entity) {
+    if (!alive(entity) || !transforms_[entity.index].has_value()) {
+        return nullptr;
+    }
+    return &transforms_[entity.index].value();
+}
+
+const TransformComponent* World::transform(Entity entity) const {
+    if (!alive(entity) || !transforms_[entity.index].has_value()) {
+        return nullptr;
+    }
+    return &transforms_[entity.index].value();
+}
+
+MeshComponent* World::mesh(Entity entity) {
+    if (!alive(entity) || !meshes_[entity.index].has_value()) {
+        return nullptr;
+    }
+    return &meshes_[entity.index].value();
+}
+
+const MeshComponent* World::mesh(Entity entity) const {
+    if (!alive(entity) || !meshes_[entity.index].has_value()) {
+        return nullptr;
+    }
+    return &meshes_[entity.index].value();
+}
+
+Entity World::createDebugRoadEntity() {
+    if (alive(debugRoadEntity_)) {
+        return debugRoadEntity_;
+    }
+
+    debugRoadEntity_ = createEntity();
+    math::Transform transformValue{};
+    transformValue.position = { 0.0F, 0.0F, 0.0F };
+    transformValue.rotation = math::quatIdentity();
+    transformValue.scale = { 1.0F, 1.0F, 1.0F };
+    addTransform(debugRoadEntity_, transformValue);
+    addMesh(debugRoadEntity_, MeshComponent{ MeshKind::DebugRoadPlate, 1000.0F, true });
+    debugRoadTransformCache_ = transformValue;
+    return debugRoadEntity_;
+}
+
+void World::fixedUpdate(double fixedDeltaSeconds) {
+    simulationSeconds_ += std::clamp(fixedDeltaSeconds, 0.0, 0.1);
+
+    TransformComponent* roadTransform = transform(debugRoadEntity_);
+    if (roadTransform == nullptr) {
+        return;
+    }
+
+    const float yawRadians = std::sin(static_cast<float>(simulationSeconds_) * 0.65F) * 0.025F;
+    roadTransform->transform.rotation = math::quatFromAxisAngle({ 0.0F, 1.0F, 0.0F }, yawRadians);
+    debugRoadTransformCache_ = roadTransform->transform;
+}
+
+bool World::indexInRange(Entity entity) const {
+    return entity.index < slots_.size();
+}
+
+} // namespace roadforge::world

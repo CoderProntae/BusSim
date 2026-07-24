@@ -37,6 +37,8 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     surfaceHeight_ = std::max(1, ANativeWindow_getHeight(window_));
     inputSystem_.setSurfaceSize(surfaceWidth_, surfaceHeight_);
     inputSystem_.reset();
+    world_.reset();
+    world_.createDebugRoadEntity();
     frameStats_.reset();
     previousFrameTimeNanos_ = 0;
     simulationClock_.reset();
@@ -111,6 +113,7 @@ void Engine::frame(int64_t frameTimeNanos) {
 
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
     for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
+        world_.fixedUpdate(simulationStep.fixedDeltaSeconds);
         ++fixedUpdateCounter_;
     }
 
@@ -132,6 +135,7 @@ void Engine::frame(int64_t frameTimeNanos) {
     const input::InputSnapshot& input = inputSystem_.snapshot();
     renderer_.setInputDebug(input.steering, input.throttle, input.brake, input.primaryTouchDown);
     renderer_.setSimulationTiming(appTimeSeconds_, fixedUpdateCounter_, simulationStep.interpolationAlpha);
+    renderer_.setDebugRoadTransform(world_.debugRoadTransform());
     renderer_.tick(static_cast<float>(deltaSeconds));
     renderer_.drawFrame();
 }

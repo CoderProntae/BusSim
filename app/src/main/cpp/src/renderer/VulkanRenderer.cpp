@@ -215,6 +215,10 @@ void VulkanRenderer::setSimulationTiming(double appTimeSeconds, uint64_t simulat
     interpolationAlpha_ = std::clamp(interpolationAlpha, 0.0, 1.0);
 }
 
+void VulkanRenderer::setDebugRoadTransform(const math::Transform& transform) {
+    debugRoadTransform_ = transform;
+}
+
 void VulkanRenderer::tick(float deltaSeconds) {
     touchPulseSeconds_ = std::max(0.0F, touchPulseSeconds_ - deltaSeconds);
     debugInputHoldSeconds_ = std::max(0.0F, debugInputHoldSeconds_ - deltaSeconds);
@@ -1008,9 +1012,7 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         const math::Mat4 projection = math::perspectiveVulkanLH(60.0F * 0.01745329252F, aspect, 0.1F, 100.0F);
         const math::Mat4 view = math::lookAtLH({0.0F, 1.65F, -4.25F}, {0.0F, 0.0F, 3.4F}, {0.0F, 1.0F, 0.0F});
 
-        math::Transform roadTransform{};
-        roadTransform.rotation = math::quatFromAxisAngle({0.0F, 1.0F, 0.0F}, std::sin(static_cast<float>(appTimeSeconds_) * 0.65F) * 0.025F);
-        const math::Mat4 model = math::transformToMat4(roadTransform);
+        const math::Mat4 model = math::transformToMat4(debugRoadTransform_);
         const math::Mat4 viewProjection = math::multiply(projection, view);
         const math::Frustum frustum = math::extractFrustum(viewProjection);
         const bool roadVisible = math::sphereInsideFrustum(frustum, {0.0F, 0.0F, 4.0F}, 1000.0F);

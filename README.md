@@ -74,7 +74,8 @@ Beklenen davranış:
     ├── 09_FAZ1_INPUT_DIAGNOSTIC_COLORS.md
     ├── 10_FAZ1_DEPTH_CAMERA.md
     ├── 11_FAZ1_TRANSFORM_FRUSTUM.md
-    └── 12_FAZ1_RESOURCE_RAII.md
+    ├── 12_FAZ1_RESOURCE_RAII.md
+    └── 13_FAZ1_WORLD_ECS.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -108,10 +109,10 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli ve ilk Vulkan resource RAII katmanı. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti. Sıradaki parçalar:
 
-1. ECS/world iskeleti.
-2. Kamera kontrolü ve debug overlay.
-3. Basit 3D otobüs/yol debug sahnesi.
-4. Asset/mesh veri formatı hazırlığı.
-5. Renderer resource abstraction katmanını pipeline/descriptor tarafına genişletmek.
+1. Kamera kontrolü ve debug overlay.
+2. Basit 3D otobüs/yol debug sahnesi.
+3. Asset/mesh veri formatı hazırlığı.
+4. Renderer resource abstraction katmanını pipeline/descriptor tarafına genişletmek.
+5. Input action mapping'i gerçek sürüş HUD'una hazırlamak.

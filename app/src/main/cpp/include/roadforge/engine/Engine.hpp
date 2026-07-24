@@ -4,6 +4,7 @@
 #include "roadforge/core/SimulationClock.hpp"
 #include "roadforge/input/InputSystem.hpp"
 #include "roadforge/renderer/VulkanRenderer.hpp"
+#include "roadforge/world/World.hpp"
 
 #include <android/native_window.h>
 
@@ -38,6 +39,7 @@ private:
     core::SimulationClock simulationClock_;
     core::FrameStats frameStats_;
     input::InputSystem inputSystem_;
+    world::World world_;
     ANativeWindow* window_ = nullptr;
     bool paused_ = true;
     int32_t surfaceWidth_ = 1;

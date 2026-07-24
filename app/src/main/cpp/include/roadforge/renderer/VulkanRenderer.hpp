@@ -3,6 +3,7 @@
 #include <android/native_window.h>
 #include <vulkan/vulkan.h>
 
+#include "roadforge/math/Transform.hpp"
 #include "roadforge/renderer/VulkanResources.hpp"
 
 #include <cstddef>
@@ -29,6 +30,7 @@ public:
     void setTouchPulse(float seconds);
     void setInputDebug(float steering, float throttle, float brake, bool touchActive);
     void setSimulationTiming(double appTimeSeconds, uint64_t simulationTick, double interpolationAlpha);
+    void setDebugRoadTransform(const math::Transform& transform);
     void tick(float deltaSeconds);
     void drawFrame();
 
@@ -100,6 +102,7 @@ private:
     float debugBrake_ = 0.0F;
     float debugInputHoldSeconds_ = 0.0F;
     bool debugTouchActive_ = false;
+    math::Transform debugRoadTransform_{};
 
     ANativeWindow* window_ = nullptr;
 
