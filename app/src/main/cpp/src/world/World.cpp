@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 
 namespace roadforge::world {
 
@@ -11,6 +12,7 @@ void World::reset() {
     transforms_.clear();
     meshes_.clear();
     debugRoadEntity_ = {};
+    debugBusEntity_ = {};
     debugRoadTransformCache_ = {};
     debugCamera_ = {};
     cameraLateralOffset_ = 0.0F;
@@ -49,6 +51,9 @@ void World::destroyEntity(Entity entity) {
     if (debugRoadEntity_ == entity) {
         debugRoadEntity_ = {};
         debugRoadTransformCache_ = {};
+    }
+    if (debugBusEntity_ == entity) {
+        debugBusEntity_ = {};
     }
 }
 
@@ -111,9 +116,46 @@ Entity World::createDebugRoadEntity() {
     transformValue.rotation = math::quatIdentity();
     transformValue.scale = { 1.0F, 1.0F, 1.0F };
     addTransform(debugRoadEntity_, transformValue);
-    addMesh(debugRoadEntity_, MeshComponent{ MeshKind::DebugRoadPlate, 1000.0F, true });
+    addMesh(debugRoadEntity_, MeshComponent{ MeshKind::DebugRoadSurface, 1000.0F, true });
     debugRoadTransformCache_ = transformValue;
+    createDebugBusEntity();
     return debugRoadEntity_;
+}
+
+Entity World::createDebugBusEntity() {
+    if (alive(debugBusEntity_)) {
+        return debugBusEntity_;
+    }
+
+    debugBusEntity_ = createEntity();
+    math::Transform transformValue{};
+    transformValue.position = { 0.0F, 0.0F, 0.0F };
+    transformValue.rotation = math::quatIdentity();
+    transformValue.scale = { 1.0F, 1.0F, 1.0F };
+    addTransform(debugBusEntity_, transformValue);
+    addMesh(debugBusEntity_, MeshComponent{ MeshKind::BusPlaceholder, 3.0F, true });
+    return debugBusEntity_;
+}
+
+void World::collectRenderProxies(std::vector<RenderProxy>& out) const {
+    out.clear();
+    for (std::size_t index = 0; index < slots_.size(); ++index) {
+        if (!slots_[index].alive || !transforms_[index].has_value() || !meshes_[index].has_value()) {
+            continue;
+        }
+
+        const MeshComponent& meshComponent = meshes_[index].value();
+        if (!meshComponent.visible) {
+            continue;
+        }
+
+        out.push_back(RenderProxy{
+            transforms_[index].value().transform,
+            meshComponent.meshKind,
+            meshComponent.boundingRadius,
+            meshComponent.visible,
+        });
+    }
 }
 
 void World::fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& cameraInput) {

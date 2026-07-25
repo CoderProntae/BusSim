@@ -20,7 +20,8 @@ inline bool operator==(const Entity& a, const Entity& b) {
 }
 
 enum class MeshKind : uint8_t {
-    DebugRoadPlate = 0,
+    DebugRoadSurface = 0,
+    BusPlaceholder,
 };
 
 struct TransformComponent final {
@@ -28,7 +29,7 @@ struct TransformComponent final {
 };
 
 struct MeshComponent final {
-    MeshKind meshKind = MeshKind::DebugRoadPlate;
+    MeshKind meshKind = MeshKind::DebugRoadSurface;
     float boundingRadius = 1.0F;
     bool visible = true;
 };
@@ -38,6 +39,13 @@ struct CameraControlInput final {
     float throttle = 0.0F;
     float brake = 0.0F;
     bool active = false;
+};
+
+struct RenderProxy final {
+    math::Transform transform{};
+    MeshKind meshKind = MeshKind::DebugRoadSurface;
+    float boundingRadius = 1.0F;
+    bool visible = true;
 };
 
 struct DebugCamera final {
@@ -72,10 +80,13 @@ public:
     [[nodiscard]] const MeshComponent* mesh(Entity entity) const;
 
     Entity createDebugRoadEntity();
+    Entity createDebugBusEntity();
+    void collectRenderProxies(std::vector<RenderProxy>& out) const;
     void fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& cameraInput = {});
 
     [[nodiscard]] const math::Transform& debugRoadTransform() const { return debugRoadTransformCache_; }
     [[nodiscard]] Entity debugRoadEntity() const { return debugRoadEntity_; }
+    [[nodiscard]] Entity debugBusEntity() const { return debugBusEntity_; }
     [[nodiscard]] const DebugCamera& debugCamera() const { return debugCamera_; }
 
 private:
@@ -92,6 +103,7 @@ private:
     std::vector<std::optional<MeshComponent>> meshes_;
 
     Entity debugRoadEntity_{};
+    Entity debugBusEntity_{};
     math::Transform debugRoadTransformCache_{};
     DebugCamera debugCamera_{};
     float cameraLateralOffset_ = 0.0F;

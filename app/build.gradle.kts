@@ -11,8 +11,8 @@ android {
         applicationId = "com.roadforge.bussim"
         minSdk = 29
         targetSdk = 35
-        versionCode = 21
-        versionName = "0.1.19-faz1-bus-road-scene"
+        versionCode = 22
+        versionName = "0.1.20-faz1-render-proxies"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

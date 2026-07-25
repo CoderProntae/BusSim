@@ -5,6 +5,7 @@
 
 #include "roadforge/core/FrameStats.hpp"
 #include "roadforge/math/Transform.hpp"
+#include "roadforge/renderer/RenderProxy.hpp"
 #include "roadforge/renderer/VulkanResources.hpp"
 
 #include <array>
@@ -35,6 +36,7 @@ public:
     void setDebugRoadTransform(const math::Transform& transform);
     void setDebugCamera(const math::Vec3& eye, const math::Vec3& target, const math::Vec3& up, float fovYRadians);
     void setFrameStats(const core::FrameStatsSnapshot& stats);
+    void setDebugRenderProxies(const std::vector<DebugRenderProxy>& proxies);
     void tick(float deltaSeconds);
     void drawFrame();
 
@@ -115,6 +117,7 @@ private:
     math::Vec3 debugCameraUp_{ 0.0F, 1.0F, 0.0F };
     float debugCameraFovYRadians_ = 60.0F * 0.01745329252F;
     core::FrameStatsSnapshot frameStats_{};
+    std::vector<DebugRenderProxy> debugRenderProxies_;
 
     ANativeWindow* window_ = nullptr;
 

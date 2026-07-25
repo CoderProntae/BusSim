@@ -134,8 +134,25 @@ void Engine::frame(int64_t frameTimeNanos) {
                 static_cast<unsigned long long>(stats.droppedTimeEvents));
     }
 
+    world_.collectRenderProxies(worldRenderProxies_);
+    debugRenderProxies_.clear();
+    debugRenderProxies_.reserve(worldRenderProxies_.size());
+    for (const world::RenderProxy& proxy : worldRenderProxies_) {
+        renderer::DebugMeshKind renderMeshKind = renderer::DebugMeshKind::RoadSurface;
+        if (proxy.meshKind == world::MeshKind::BusPlaceholder) {
+            renderMeshKind = renderer::DebugMeshKind::BusPlaceholder;
+        }
+        debugRenderProxies_.push_back(renderer::DebugRenderProxy{
+            proxy.transform,
+            renderMeshKind,
+            proxy.boundingRadius,
+            proxy.visible,
+        });
+    }
+
     renderer_.setInputDebug(input.steering, input.throttle, input.brake, input.primaryTouchDown);
     renderer_.setFrameStats(stats);
+    renderer_.setDebugRenderProxies(debugRenderProxies_);
     renderer_.setSimulationTiming(appTimeSeconds_, fixedUpdateCounter_, simulationStep.interpolationAlpha);
     renderer_.setDebugRoadTransform(world_.debugRoadTransform());
     const world::DebugCamera& camera = world_.debugCamera();

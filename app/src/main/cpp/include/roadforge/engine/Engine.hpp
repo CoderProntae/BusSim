@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <vector>
 
 namespace roadforge::engine {
 
@@ -40,6 +41,8 @@ private:
     core::FrameStats frameStats_;
     input::InputSystem inputSystem_;
     world::World world_;
+    std::vector<world::RenderProxy> worldRenderProxies_;
+    std::vector<renderer::DebugRenderProxy> debugRenderProxies_;
     ANativeWindow* window_ = nullptr;
     bool paused_ = true;
     int32_t surfaceWidth_ = 1;

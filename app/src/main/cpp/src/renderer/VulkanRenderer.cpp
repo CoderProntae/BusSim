@@ -489,6 +489,10 @@ void VulkanRenderer::setFrameStats(const core::FrameStatsSnapshot& stats) {
     frameStats_ = stats;
 }
 
+void VulkanRenderer::setDebugRenderProxies(const std::vector<DebugRenderProxy>& proxies) {
+    debugRenderProxies_ = proxies;
+}
+
 void VulkanRenderer::tick(float deltaSeconds) {
     touchPulseSeconds_ = std::max(0.0F, touchPulseSeconds_ - deltaSeconds);
     debugInputHoldSeconds_ = std::max(0.0F, debugInputHoldSeconds_ - deltaSeconds);
