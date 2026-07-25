@@ -1172,12 +1172,15 @@ bool VulkanRenderer::updateDebugOverlayBuffers(uint32_t frameIndex) {
     indices.reserve(384);
 
     constexpr float z = 0.0F;
-    appendOverlayQuad(vertices, indices, -0.965F, 0.615F, -0.305F, 0.955F, z, { 0.015F, 0.018F, 0.024F });
-    appendOverlayQuad(vertices, indices, -0.955F, 0.925F, -0.315F, 0.945F, z, { 0.10F, 0.12F, 0.16F });
-    appendOverlayLabel(vertices, indices, "FPS", -0.935F, 0.900F, 0.0085F, { 0.78F, 0.95F, 0.82F });
-    appendOverlayLabel(vertices, indices, "MS", -0.935F, 0.820F, 0.0085F, { 0.96F, 0.84F, 0.45F });
-    appendOverlayLabel(vertices, indices, "SIM", -0.935F, 0.740F, 0.0085F, { 0.66F, 0.82F, 1.00F });
-    appendOverlayLabel(vertices, indices, "DRP", -0.935F, 0.660F, 0.0085F, { 1.00F, 0.50F, 0.50F });
+    // Because appendOverlayQuad compensates the current Android/Vulkan surface
+    // transform, logical +X maps to device-top. Keep the panel's logical X
+    // positive so it lands in the physical top-left corner after conversion.
+    appendOverlayQuad(vertices, indices, 0.305F, 0.615F, 0.965F, 0.955F, z, { 0.015F, 0.018F, 0.024F });
+    appendOverlayQuad(vertices, indices, 0.315F, 0.925F, 0.955F, 0.945F, z, { 0.10F, 0.12F, 0.16F });
+    appendOverlayLabel(vertices, indices, "FPS", 0.335F, 0.900F, 0.0085F, { 0.78F, 0.95F, 0.82F });
+    appendOverlayLabel(vertices, indices, "MS", 0.335F, 0.820F, 0.0085F, { 0.96F, 0.84F, 0.45F });
+    appendOverlayLabel(vertices, indices, "SIM", 0.335F, 0.740F, 0.0085F, { 0.66F, 0.82F, 1.00F });
+    appendOverlayLabel(vertices, indices, "DRP", 0.335F, 0.660F, 0.0085F, { 1.00F, 0.50F, 0.50F });
 
     const float fpsRatio = std::clamp(static_cast<float>(frameStats_.estimatedFps / 60.0), 0.0F, 1.0F);
     const float frameRatio = std::clamp(static_cast<float>(1.0 - (frameStats_.averageFrameMs / 33.333)), 0.0F, 1.0F);
@@ -1186,8 +1189,8 @@ bool VulkanRenderer::updateDebugOverlayBuffers(uint32_t frameIndex) {
 
     const auto appendBar = [&vertices, &indices](float y, float ratio, const std::array<float, 3>& color) {
         constexpr float zBar = 0.0F;
-        constexpr float x0 = -0.765F;
-        constexpr float x1 = -0.335F;
+        constexpr float x0 = 0.505F;
+        constexpr float x1 = 0.935F;
         constexpr float h = 0.035F;
         appendOverlayQuad(vertices, indices, x0, y, x1, y + h, zBar, { 0.055F, 0.062F, 0.075F });
         appendOverlayQuad(vertices, indices, x0, y, x0 + ((x1 - x0) * ratio), y + h, zBar, color);
