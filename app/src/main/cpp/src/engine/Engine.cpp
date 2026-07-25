@@ -112,17 +112,10 @@ void Engine::frame(int64_t frameTimeNanos) {
     appTimeSeconds_ += deltaSeconds;
 
     const input::InputSnapshot& input = inputSystem_.snapshot();
-    const bool zoomInputActive = input.throttle > 0.5F || input.brake > 0.5F;
-    const world::CameraControlInput cameraInput{
-        zoomInputActive ? 0.0F : input.steering,
-        input.throttle,
-        input.brake,
-        input.primaryTouchDown,
-    };
 
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
     for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
-        world_.fixedUpdate(simulationStep.fixedDeltaSeconds, cameraInput);
+        world_.fixedUpdate(simulationStep.fixedDeltaSeconds);
         ++fixedUpdateCounter_;
     }
 
