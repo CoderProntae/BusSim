@@ -68,6 +68,7 @@ add_library(roadforge SHARED
     src/physics/RaycastVehicleBackend.cpp
     src/platform/android/JniBridge.cpp
     src/renderer/DebugMeshAssets.cpp
+    src/renderer/Material.cpp
     src/renderer/VulkanRenderer.cpp
     src/renderer/VulkanResources.cpp
     src/vehicle/VehicleController.cpp

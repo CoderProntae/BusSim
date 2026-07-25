@@ -1,0 +1,64 @@
+{
+  "schema": "roadforge.material-library.v1",
+  "colorSpace": "linear",
+  "materials": [
+    {
+      "id": "asphalt_worn_dark",
+      "usage": ["road", "highway", "terminal_approach"],
+      "baseColor": [0.055, 0.058, 0.062, 1.0],
+      "metallic": 0.0,
+      "roughness": 0.92,
+      "normalScale": 0.75,
+      "ambientOcclusion": 0.95,
+      "texturePlan": {
+        "albedo": "asphalt_worn_dark_basecolor.ktx2",
+        "normal": "asphalt_worn_dark_normal.ktx2",
+        "orm": "asphalt_worn_dark_orm.ktx2",
+        "targetResolution": 2048,
+        "tilingMeters": 6.0
+      }
+    },
+    {
+      "id": "bus_body_orange_clearcoat",
+      "usage": ["bus_exterior"],
+      "baseColor": [0.95, 0.38, 0.06, 1.0],
+      "metallic": 0.0,
+      "roughness": 0.38,
+      "normalScale": 0.45,
+      "ambientOcclusion": 1.0,
+      "clearcoat": 0.65
+    },
+    {
+      "id": "bus_window_blue_tint",
+      "usage": ["glass", "bus_window"],
+      "baseColor": [0.045, 0.13, 0.20, 0.72],
+      "metallic": 0.0,
+      "roughness": 0.18,
+      "normalScale": 0.20,
+      "transmission": 0.35
+    },
+    {
+      "id": "tire_rubber_matte",
+      "usage": ["wheel", "tire"],
+      "baseColor": [0.008, 0.008, 0.009, 1.0],
+      "metallic": 0.0,
+      "roughness": 0.94,
+      "normalScale": 0.80
+    },
+    {
+      "id": "terminal_concrete_worn",
+      "usage": ["terminal", "parking_pad", "sidewalk"],
+      "baseColor": [0.48, 0.47, 0.43, 1.0],
+      "metallic": 0.0,
+      "roughness": 0.88,
+      "normalScale": 0.65,
+      "texturePlan": {
+        "albedo": "terminal_concrete_worn_basecolor.ktx2",
+        "normal": "terminal_concrete_worn_normal.ktx2",
+        "orm": "terminal_concrete_worn_orm.ktx2",
+        "targetResolution": 2048,
+        "tilingMeters": 4.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "roadforge.procedural-vehicle.v1",
+  "id": "intercity_bus_v1",
+  "displayName": "RoadForge Intercity Coach V1",
+  "target": "mobile_mid_high",
+  "dimensionsMeters": {
+    "length": 12.4,
+    "width": 2.55,
+    "height": 3.65,
+    "wheelbase": 6.1
+  },
+  "lodPlan": [
+    { "lod": 0, "maxDistanceMeters": 45, "triangleBudget": 18000 },
+    { "lod": 1, "maxDistanceMeters": 120, "triangleBudget": 6500 },
+    { "lod": 2, "maxDistanceMeters": 300, "triangleBudget": 1600 }
+  ],
+  "materials": {
+    "body": "bus_body_orange_clearcoat",
+    "trim": "bus_body_graphite_trim",
+    "windows": "bus_window_blue_tint",
+    "tires": "tire_rubber_matte",
+    "rims": "wheel_rim_brushed_metal",
+    "headlights": "headlight_warm_glass",
+    "brakeLights": "brake_light_red_emissive"
+  },
+  "meshParts": [
+    { "name": "main_body", "type": "rounded_box", "role": "exterior_shell" },
+    { "name": "front_windshield", "type": "curved_panel", "role": "glass" },
+    { "name": "side_windows_left", "type": "panel_strip", "role": "glass" },
+    { "name": "side_windows_right", "type": "panel_strip", "role": "glass" },
+    { "name": "wheel_fl", "type": "cylinder", "role": "wheel" },
+    { "name": "wheel_fr", "type": "cylinder", "role": "wheel" },
+    { "name": "wheel_rl", "type": "cylinder", "role": "wheel" },
+    { "name": "wheel_rr", "type": "cylinder", "role": "wheel" },
+    { "name": "headlights", "type": "emissive_panels", "role": "lighting" },
+    { "name": "tail_lights", "type": "emissive_panels", "role": "lighting" }
+  ],
+  "physicsProxy": {
+    "massKg": 12500,
+    "centerOfMassOffset": [0.0, -0.45, 0.15],
+    "collisionBoxHalfExtents": [1.28, 1.82, 6.2],
+    "wheelRadiusMeters": 0.52,
+    "suspensionRestLengthMeters": 0.38
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "roadforge.environment-layout.v1",
+  "id": "intercity_test_corridor_v1",
+  "displayName": "Intercity Test Corridor V1",
+  "target": "phase2_driving_vertical_slice",
+  "segments": [
+    { "id": "main_straight", "type": "road_segment", "lengthMeters": 120, "lanes": 2, "material": "asphalt_worn_dark" },
+    { "id": "cross_service", "type": "road_segment", "lengthMeters": 36, "lanes": 2, "material": "asphalt_worn_dark" },
+    { "id": "terminal_pad", "type": "parking_pad", "widthMeters": 18, "depthMeters": 24, "material": "terminal_concrete_worn" }
+  ],
+  "roadMarkings": {
+    "edgeLineMaterial": "lane_paint_aged_ivory",
+    "centerLineMaterial": "lane_paint_aged_ivory",
+    "dashLengthMeters": 3.0,
+    "dashGapMeters": 4.5
+  },
+  "futureGameplayHooks": [
+    "route_start",
+    "terminal_stop",
+    "service_area",
+    "traffic_lane_graph"
+  ]
+}
