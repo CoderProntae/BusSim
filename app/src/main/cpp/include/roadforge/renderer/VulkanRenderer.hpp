@@ -63,7 +63,6 @@ private:
     bool pickPhysicalDevice();
     bool createLogicalDevice();
     bool createDebugMeshResources();
-    bool createDebugOverlayResources();
     bool createSwapchain();
     bool createImageViews();
     bool createDepthResources();
@@ -75,13 +74,11 @@ private:
     bool createSyncObjects();
 
     void cleanupDebugMeshResources();
-    void cleanupDebugOverlayResources();
     void cleanupDepthResources();
     void cleanupSwapchain();
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     bool updateDebugSceneBuffers(uint32_t frameIndex);
-    bool updateDebugOverlayBuffers(uint32_t frameIndex);
     [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
     [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, DeviceBuffer& output) const;
     [[nodiscard]] bool createImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, DeviceImage& output) const;
@@ -140,9 +137,6 @@ private:
     std::array<DeviceBuffer, kMaxFramesInFlight> debugSceneVertexBuffers_;
     std::array<DeviceBuffer, kMaxFramesInFlight> debugSceneIndexBuffers_;
     std::array<uint32_t, kMaxFramesInFlight> debugSceneIndexCounts_{};
-    std::array<DeviceBuffer, kMaxFramesInFlight> overlayVertexBuffers_;
-    std::array<DeviceBuffer, kMaxFramesInFlight> overlayIndexBuffers_;
-    std::array<uint32_t, kMaxFramesInFlight> overlayIndexCounts_{};
 
     std::vector<VkImage> swapchainImages_;
     std::vector<VkImageView> swapchainImageViews_;

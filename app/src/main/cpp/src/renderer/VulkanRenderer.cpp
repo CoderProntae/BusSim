@@ -75,67 +75,6 @@ const std::array<uint8_t, 7>& glyphRows(char c) {
     }
 }
 
-void appendOverlayQuad(std::vector<DebugVertex>& vertices,
-                       std::vector<uint16_t>& indices,
-                       float minX,
-                       float minY,
-                       float maxX,
-                       float maxY,
-                       float z,
-                       const std::array<float, 3>& color) {
-    // Callers pass logical screen coordinates where negative X is left and
-    // positive Y is top. On the tested Android/Vulkan surface, the shared world
-    // pipeline reaches the display with a 90-degree axis transform. Pre-rotate
-    // overlay quads here so labels are upright and bars keep their intended
-    // horizontal/vertical direction on device.
-    const auto toDeviceNdc = [z, &color](float x, float y) -> DebugVertex {
-        return DebugVertex{{ -y, x, z }, { color[0], color[1], color[2] }};
-    };
-
-    const uint16_t base = static_cast<uint16_t>(vertices.size());
-    vertices.push_back(toDeviceNdc(minX, minY));
-    vertices.push_back(toDeviceNdc(maxX, minY));
-    vertices.push_back(toDeviceNdc(maxX, maxY));
-    vertices.push_back(toDeviceNdc(minX, maxY));
-    indices.push_back(base);
-    indices.push_back(static_cast<uint16_t>(base + 1));
-    indices.push_back(static_cast<uint16_t>(base + 2));
-    indices.push_back(static_cast<uint16_t>(base + 2));
-    indices.push_back(static_cast<uint16_t>(base + 3));
-    indices.push_back(base);
-}
-
-void appendOverlayLabel(std::vector<DebugVertex>& vertices,
-                        std::vector<uint16_t>& indices,
-                        const char* text,
-                        float minX,
-                        float maxY,
-                        float cellSize,
-                        const std::array<float, 3>& color) {
-    constexpr float kOverlayZ = 0.0F;
-    float cursorX = minX;
-    for (int glyph = 0; text[glyph] != '\0'; ++glyph) {
-        if (text[glyph] == ' ') {
-            cursorX += cellSize * 3.0F;
-            continue;
-        }
-        const std::array<uint8_t, 7>& rows = glyphRows(text[glyph]);
-        for (int row = 0; row < 7; ++row) {
-            for (int col = 0; col < 5; ++col) {
-                const bool enabled = ((rows[row] >> (4 - col)) & 0x1U) != 0U;
-                if (!enabled) {
-                    continue;
-                }
-                const float x0 = cursorX + (static_cast<float>(col) * cellSize);
-                const float y1 = maxY - (static_cast<float>(row) * cellSize);
-                appendOverlayQuad(vertices, indices, x0, y1 - (cellSize * 0.82F), x0 + (cellSize * 0.82F), y1, kOverlayZ, color);
-            }
-        }
-        cursorX += cellSize * 6.0F;
-    }
-}
-
-
 const char* vkResultName(VkResult result) {
     switch (result) {
         case VK_SUCCESS: return "VK_SUCCESS";
@@ -194,7 +133,6 @@ bool VulkanRenderer::initialize(ANativeWindow* window) {
         || !pickPhysicalDevice()
         || !createLogicalDevice()
         || !createDebugMeshResources()
-        || !createDebugOverlayResources()
         || !createSwapchain()
         || !createImageViews()
         || !createDepthResources()
@@ -219,7 +157,6 @@ void VulkanRenderer::shutdown() {
     }
 
     cleanupSwapchain();
-    cleanupDebugOverlayResources();
     cleanupDebugMeshResources();
 
     for (VkSemaphore semaphore : renderFinishedSemaphores_) {
@@ -547,30 +484,6 @@ bool VulkanRenderer::createDebugMeshResources() {
     }
 
     RF_LOGI("Dynamic debug scene resources created for %u frames", kMaxFramesInFlight);
-    return true;
-}
-
-bool VulkanRenderer::createDebugOverlayResources() {
-    constexpr VkDeviceSize kOverlayVertexBufferSize = sizeof(DebugVertex) * 2048U;
-    constexpr VkDeviceSize kOverlayIndexBufferSize = sizeof(uint16_t) * 3072U;
-
-    for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
-        if (!createBuffer(kOverlayVertexBufferSize,
-                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                          overlayVertexBuffers_[frame])) {
-            return false;
-        }
-        if (!createBuffer(kOverlayIndexBufferSize,
-                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                          overlayIndexBuffers_[frame])) {
-            return false;
-        }
-        overlayIndexCounts_[frame] = 0;
-    }
-
-    RF_LOGI("Debug overlay resources created for %u frames", kMaxFramesInFlight);
     return true;
 }
 
@@ -985,14 +898,6 @@ void VulkanRenderer::cleanupDebugMeshResources() {
 }
 
 
-void VulkanRenderer::cleanupDebugOverlayResources() {
-    for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
-        overlayIndexBuffers_[frame].destroy();
-        overlayVertexBuffers_[frame].destroy();
-        overlayIndexCounts_[frame] = 0;
-    }
-}
-
 void VulkanRenderer::cleanupDepthResources() {
     depthImage_.destroy();
     depthFormat_ = VK_FORMAT_UNDEFINED;
@@ -1104,71 +1009,6 @@ bool VulkanRenderer::updateDebugSceneBuffers(uint32_t frameIndex) {
     return true;
 }
 
-bool VulkanRenderer::updateDebugOverlayBuffers(uint32_t frameIndex) {
-    if (frameIndex >= kMaxFramesInFlight || !overlayVertexBuffers_[frameIndex].valid() || !overlayIndexBuffers_[frameIndex].valid()) {
-        return false;
-    }
-
-    std::vector<DebugVertex> vertices;
-    std::vector<uint16_t> indices;
-    vertices.reserve(256);
-    indices.reserve(384);
-
-    constexpr float z = 0.0F;
-    // Because appendOverlayQuad compensates the current Android/Vulkan surface
-    // transform, logical +X maps to device-top. Keep the panel's logical X
-    // positive so it lands in the physical top-left corner after conversion.
-    appendOverlayQuad(vertices, indices, 0.305F, 0.615F, 0.965F, 0.955F, z, { 0.015F, 0.018F, 0.024F });
-    appendOverlayQuad(vertices, indices, 0.315F, 0.925F, 0.955F, 0.945F, z, { 0.10F, 0.12F, 0.16F });
-    appendOverlayLabel(vertices, indices, "FPS", 0.335F, 0.900F, 0.0085F, { 0.78F, 0.95F, 0.82F });
-    appendOverlayLabel(vertices, indices, "MS", 0.335F, 0.820F, 0.0085F, { 0.96F, 0.84F, 0.45F });
-    appendOverlayLabel(vertices, indices, "SIM", 0.335F, 0.740F, 0.0085F, { 0.66F, 0.82F, 1.00F });
-    appendOverlayLabel(vertices, indices, "DRP", 0.335F, 0.660F, 0.0085F, { 1.00F, 0.50F, 0.50F });
-
-    const float fpsRatio = std::clamp(static_cast<float>(frameStats_.estimatedFps / 60.0), 0.0F, 1.0F);
-    const float frameRatio = std::clamp(static_cast<float>(1.0 - (frameStats_.averageFrameMs / 33.333)), 0.0F, 1.0F);
-    const float simRatio = std::clamp(static_cast<float>(frameStats_.averageFixedSteps / 2.0), 0.0F, 1.0F);
-    const float droppedRatio = frameStats_.droppedTimeEvents > 0 ? 1.0F : 0.05F;
-
-    const auto appendBar = [&vertices, &indices](float y, float ratio, const std::array<float, 3>& color) {
-        constexpr float zBar = 0.0F;
-        constexpr float x0 = 0.505F;
-        constexpr float x1 = 0.935F;
-        constexpr float h = 0.035F;
-        appendOverlayQuad(vertices, indices, x0, y, x1, y + h, zBar, { 0.055F, 0.062F, 0.075F });
-        appendOverlayQuad(vertices, indices, x0, y, x0 + ((x1 - x0) * ratio), y + h, zBar, color);
-    };
-
-    appendBar(0.865F, fpsRatio, { 0.10F, 0.90F, 0.22F });
-    appendBar(0.785F, frameRatio, { 0.95F, 0.70F, 0.12F });
-    appendBar(0.705F, simRatio, { 0.18F, 0.50F, 1.00F });
-    appendBar(0.625F, droppedRatio, frameStats_.droppedTimeEvents > 0 ? std::array<float, 3>{ 1.0F, 0.05F, 0.02F } : std::array<float, 3>{ 0.16F, 0.22F, 0.18F });
-
-    const VkDeviceSize vertexBytes = sizeof(DebugVertex) * vertices.size();
-    const VkDeviceSize indexBytes = sizeof(uint16_t) * indices.size();
-    if (vertexBytes > overlayVertexBuffers_[frameIndex].size || indexBytes > overlayIndexBuffers_[frameIndex].size) {
-        RF_LOGE("Debug overlay buffer overflow: vertexBytes=%llu indexBytes=%llu", static_cast<unsigned long long>(vertexBytes), static_cast<unsigned long long>(indexBytes));
-        return false;
-    }
-
-    void* vertexData = nullptr;
-    if (!checkResult(vkMapMemory(device_, overlayVertexBuffers_[frameIndex].memory, 0, vertexBytes, 0, &vertexData), "vkMapMemory(overlay vertex)")) {
-        return false;
-    }
-    std::memcpy(vertexData, vertices.data(), static_cast<size_t>(vertexBytes));
-    vkUnmapMemory(device_, overlayVertexBuffers_[frameIndex].memory);
-
-    void* indexData = nullptr;
-    if (!checkResult(vkMapMemory(device_, overlayIndexBuffers_[frameIndex].memory, 0, indexBytes, 0, &indexData), "vkMapMemory(overlay index)")) {
-        return false;
-    }
-    std::memcpy(indexData, indices.data(), static_cast<size_t>(indexBytes));
-    vkUnmapMemory(device_, overlayIndexBuffers_[frameIndex].memory);
-
-    overlayIndexCounts_[frameIndex] = static_cast<uint32_t>(indices.size());
-    return true;
-}
-
 void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1259,11 +1099,6 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         vkCmdBindIndexBuffer(commandBuffer, debugSceneIndexBuffers_[currentFrame_].buffer, 0, VK_INDEX_TYPE_UINT16);
         vkCmdDrawIndexed(commandBuffer, debugSceneIndexCounts_[currentFrame_], 1, 0, 0, 0);
     }
-
-    // Temporarily disabled: the shared 3D pipeline is not a reliable place for
-    // screen-space UI on all Android surface transforms. We will bring the stats
-    // panel back with a dedicated 2D overlay pipeline instead of spending more
-    // time compensating this path.
 
     vkCmdEndRenderPass(commandBuffer);
 

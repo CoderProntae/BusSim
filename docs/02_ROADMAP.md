@@ -2,6 +2,8 @@
 
 ## Faz 0 — Native Android/Vulkan bootstrap
 
+Durum: **Tamamlandı.**
+
 Kapsam:
 
 - Android/JNI/C++/Vulkan başlangıç hattı
@@ -17,35 +19,107 @@ Kabul kriteri:
 
 ## Faz 1 — Motor çekirdeği + 3D debug scene
 
-1. Core: assert, error/result, dosya sistemi, job sistemi, profiler, zamanlayıcı.
-2. Input action/axis sistemi ve input recording.
-3. Math: vector/matrix/quaternion/frustum.
-4. Entity/component/sparse set world ve system scheduler.
-5. Renderer: shader asset pipeline, mesh/texture, depth, PBR, culling/LOD.
-6. Debug overlay: FPS, CPU/GPU frame time, draw call, bellek.
-7. glTF test otobüsü + test yol parçası + serbest kamera.
+Durum: **Kapanış aşamasında.**
 
-Kabul kriteri:
+Tamamlanan ana parçalar:
 
-- Ekranda 3D test otobüsü/yol görünür.
-- Mobilde 60 FPS metrik overlay'i çalışır.
+- Android Choreographer frame loop
+- Native C++ Engine host
+- 60 Hz `SimulationClock`
+- InputSystem ve diagnostic input renkleri
+- FrameStats toplama
+- Math: `Vec`, `Mat4`, `Quat`, `Transform`, `Frustum`
+- World/ECS başlangıcı
+- World → RenderProxy köprüsü
+- Vulkan shader pipeline
+- Vertex/index buffer
+- Depth buffer
+- RAII buffer/image kaynakları
+- Dynamic debug scene
+- Placeholder 3D yol + otobüs
+- GitHub Actions debug APK akışı
+
+Bilinçli ertelenen Faz 1 parçaları:
+
+- Üretim kalitesi UI/overlay: ayrı 2D UI pipeline ile dönecek.
+- Texture/material/PBR: Faz 2 sonrası görsel kalite adımlarında genişletilecek.
+- Gerçek asset import: önce static mesh veri formatı ve sonra loader.
+
+Faz 1 kapanış hedefi:
+
+- 3D yol + placeholder otobüs stabil çalışır.
+- APK CI başarılıdır.
+- Pause/resume stabil kalır.
+- Faz 2 sürüş vertical slice için world/render/input sınırları hazırdır.
 
 ## Faz 2 — Sürüş vertical slice
 
-1. Sabit 60 Hz `SimulationClock`; render interpolation.
-2. Jolt teknik değerlendirmesi, `IPhysicsWorld` adapterı.
-3. Otobüs gövdesi, 4x2/6x2 teker raycast süspansiyonu.
-4. Motor, şanzıman, retarder, fren.
-5. Kabin/takip kamera + HUD.
-6. Test pisti, çarpışma, yakıt.
+Tahmini süre: **10–12 ara adım.**
+
+Önerilen sıra:
+
+1. **Faz 2.1 — Vehicle input/state modeli**
+   - Gaz, fren, steering, vites, retarder/el freni komutları.
+   - UI input ile araç sistemi arasında command sınırı.
+
+2. **Faz 2.2 — Kinematik otobüs prototipi**
+   - Fizik motoru olmadan basit hız/yön/hareket.
+   - İlk telefonda sürülebilir placeholder otobüs.
+
+3. **Faz 2.3 — Mobil sürüş HUD input bölgeleri**
+   - Sağ/sol el düzeni hazırlığı.
+   - Gaz/fren/direksiyon bölgeleri.
+   - Safe-area yaklaşımı.
+
+4. **Faz 2.4 — Takip/kabin kamera prototipi**
+   - Araca bağlı takip kamera.
+   - Sabit debug kamera yerine sürüş kamerası.
+
+5. **Faz 2.5 — Test pisti / yol segmentleri**
+   - Düz yol yerine dönüşlü küçük test pisti.
+   - Şerit ve zemin referansları.
+
+6. **Faz 2.6 — Fizik backend adapter tasarımı**
+   - `IPhysicsWorld`
+   - `IVehiclePhysicsBackend`
+   - Jolt değerlendirmesi için sınırların hazırlanması.
+
+7. **Faz 2.7 — Raycast teker/süspansiyon prototipi**
+   - Teker temas noktaları.
+   - Spring/damper.
+   - Basit yer tutuş sinyali.
+
+8. **Faz 2.8 — Motor/şanzıman/fren başlangıcı**
+   - Tork eğrisi.
+   - Otomatik vites state machine.
+   - Fren/retarder ayrımı.
+
+9. **Faz 2.9 — Çarpışma/yakıt/hasar ilk sinyalleri**
+   - Kaba collision proxy.
+   - Yakıt tüketimi sinyali.
+   - Hasar event'i temeli.
+
+10. **Faz 2.10 — Sürüş metrikleri ve stabilizasyon**
+    - 5 dakikalık sürüş testi.
+    - FPS/stabilite gözlemi.
+    - Input latency ve kamera hissi düzeltmeleri.
+
+Olası ek adımlar:
+
+- **Faz 2.11 — Physics tuning pass**
+- **Faz 2.12 — Sürüş vertical slice kapanış APK'sı**
 
 Kabul kriteri:
 
 - 5 dakikalık sürüş yapılabilir.
 - Araç kararlı ve input duyarlıdır.
-- Profil cihazda 60 FPS korunur.
+- Kamera aracı takip eder.
+- Basit test pistinde sürüş hissi anlaşılırdır.
+- Profil cihazda 60 FPS hedefi korunur.
 
 ## Faz 3 — Sefer vertical slice
+
+Tahmini: **8–12 ara adım.**
 
 - Trafik AI
 - Yolcu biniş/iniş
@@ -56,6 +130,8 @@ Kabul kriteri:
 
 ## Faz 4 — Şirket MVP
 
+Tahmini: **8–10 ara adım.**
+
 - Yerel/sürümlü kayıt
 - Filo/otobüs satın alma
 - Rota seçimi
@@ -65,6 +141,8 @@ Kabul kriteri:
 - Ana menü/garaj/sefer planlama
 
 ## Faz 5 — Üretim kalitesi
+
+Tahmini: **10–15+ ara adım.**
 
 - Dinamik çözünürlük
 - Cihaz kalite profilleri
