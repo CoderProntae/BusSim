@@ -49,6 +49,11 @@ struct RenderProxy final {
     bool visible = true;
 };
 
+enum class CameraMode : uint8_t {
+    Follow = 0,
+    Cabin,
+};
+
 struct DebugCamera final {
     math::Vec3 eye{ 0.0F, 1.65F, -4.25F };
     math::Vec3 target{ 0.0F, 0.0F, 3.0F };
@@ -84,11 +89,13 @@ public:
     Entity createDebugBusEntity();
     void collectRenderProxies(std::vector<RenderProxy>& out) const;
     void fixedUpdate(double fixedDeltaSeconds, const vehicle::VehicleState& vehicleState);
+    void toggleCameraMode();
 
     [[nodiscard]] const math::Transform& debugRoadTransform() const { return debugRoadTransformCache_; }
     [[nodiscard]] Entity debugRoadEntity() const { return debugRoadEntity_; }
     [[nodiscard]] Entity debugBusEntity() const { return debugBusEntity_; }
     [[nodiscard]] const DebugCamera& debugCamera() const { return debugCamera_; }
+    [[nodiscard]] CameraMode cameraMode() const { return cameraMode_; }
 
 private:
     struct Slot final {
@@ -108,6 +115,7 @@ private:
     math::Transform debugRoadTransformCache_{};
     math::Transform debugBusTransformCache_{};
     DebugCamera debugCamera_{};
+    CameraMode cameraMode_ = CameraMode::Follow;
     float cameraLateralOffset_ = 0.0F;
     float cameraDistance_ = 7.65F;
     float cameraHeight_ = 1.65F;

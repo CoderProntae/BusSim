@@ -16,6 +16,7 @@ void World::reset() {
     debugRoadTransformCache_ = {};
     debugBusTransformCache_ = {};
     debugCamera_ = {};
+    cameraMode_ = CameraMode::Follow;
     cameraLateralOffset_ = 0.0F;
     cameraDistance_ = 7.65F;
     cameraHeight_ = 1.65F;
@@ -181,19 +182,39 @@ void World::fixedUpdate(double fixedDeltaSeconds, const vehicle::VehicleState& v
 
     const float heading = vehicleState.headingRadians;
     const math::Vec3 forward{ std::sin(heading), 0.0F, std::cos(heading) };
+    const math::Vec3 right{ std::cos(heading), 0.0F, -std::sin(heading) };
     const math::Vec3 busPosition{ vehicleState.positionX, 0.0F, vehicleState.positionZ };
-    debugCamera_.target = {
-        busPosition.x + (forward.x * 1.8F),
-        0.42F,
-        busPosition.z + (forward.z * 1.8F),
-    };
     debugCamera_.up = { 0.0F, 1.0F, 0.0F };
-    debugCamera_.fovYRadians = 60.0F * 0.01745329252F;
-    debugCamera_.eye = {
-        busPosition.x - (forward.x * cameraDistance_),
-        cameraHeight_ + 1.05F,
-        busPosition.z - (forward.z * cameraDistance_),
-    };
+
+    if (cameraMode_ == CameraMode::Cabin) {
+        debugCamera_.fovYRadians = 72.0F * 0.01745329252F;
+        debugCamera_.eye = {
+            busPosition.x - (right.x * 0.36F) + (forward.x * 0.62F),
+            0.98F,
+            busPosition.z - (right.z * 0.36F) + (forward.z * 0.62F),
+        };
+        debugCamera_.target = {
+            debugCamera_.eye.x + (forward.x * 7.0F),
+            0.82F,
+            debugCamera_.eye.z + (forward.z * 7.0F),
+        };
+    } else {
+        debugCamera_.fovYRadians = 60.0F * 0.01745329252F;
+        debugCamera_.target = {
+            busPosition.x + (forward.x * 1.8F),
+            0.42F,
+            busPosition.z + (forward.z * 1.8F),
+        };
+        debugCamera_.eye = {
+            busPosition.x - (forward.x * cameraDistance_),
+            cameraHeight_ + 1.05F,
+            busPosition.z - (forward.z * cameraDistance_),
+        };
+    }
+}
+
+void World::toggleCameraMode() {
+    cameraMode_ = cameraMode_ == CameraMode::Follow ? CameraMode::Cabin : CameraMode::Follow;
 }
 
 bool World::indexInRange(Entity entity) const {

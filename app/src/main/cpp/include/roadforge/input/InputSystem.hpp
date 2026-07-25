@@ -18,6 +18,7 @@ struct InputSnapshot final {
     float steering = 0.0F; // -1 left, +1 right
     float throttle = 0.0F; // 0..1
     float brake = 0.0F;    // 0..1
+    bool cameraToggle = false;
     int32_t pointerCount = 0;
     uint64_t sequence = 0;
 };

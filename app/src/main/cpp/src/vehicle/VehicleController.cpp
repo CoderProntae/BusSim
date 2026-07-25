@@ -28,10 +28,11 @@ void VehicleController::reset() {
 
 VehicleCommand VehicleController::commandFromInput(const input::InputSnapshot& input) {
     VehicleCommand command{};
-    command.throttle = input.primaryTouchDown ? std::clamp(input.throttle, 0.0F, 1.0F) : 0.0F;
-    command.brake = input.primaryTouchDown ? std::clamp(input.brake, 0.0F, 1.0F) : 0.0F;
+    const bool cameraToggleOnly = input.cameraToggle && input.throttle <= 0.0F && input.brake <= 0.0F && std::fabs(input.steering) <= 0.001F;
+    command.throttle = input.primaryTouchDown && !cameraToggleOnly ? std::clamp(input.throttle, 0.0F, 1.0F) : 0.0F;
+    command.brake = input.primaryTouchDown && !cameraToggleOnly ? std::clamp(input.brake, 0.0F, 1.0F) : 0.0F;
 
-    command.steering = input.primaryTouchDown ? std::clamp(input.steering, -1.0F, 1.0F) : 0.0F;
+    command.steering = input.primaryTouchDown && !cameraToggleOnly ? std::clamp(input.steering, -1.0F, 1.0F) : 0.0F;
     command.retarder = 0.0F;
     command.handbrake = false;
     command.gearMode = GearMode::Drive;

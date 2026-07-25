@@ -54,6 +54,7 @@ private:
     double appTimeSeconds_ = 0.0;
     uint64_t fixedUpdateCounter_ = 0;
     uint64_t droppedTimeEvents_ = 0;
+    bool cameraToggleWasDown_ = false;
 };
 
 } // namespace roadforge::engine

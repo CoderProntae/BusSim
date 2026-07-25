@@ -49,6 +49,7 @@ void InputSystem::handleTouchState(int32_t androidAction, int32_t pointerCount, 
         snapshot_.steering = 0.0F;
         snapshot_.throttle = 0.0F;
         snapshot_.brake = 0.0F;
+        snapshot_.cameraToggle = false;
         return;
     }
 
@@ -91,14 +92,20 @@ void InputSystem::rebuildAxesFromTouchState(int32_t pointerCount, const float* x
     bool steeringFound = false;
     float throttle = 0.0F;
     float brake = 0.0F;
+    bool cameraToggle = false;
 
     for (int32_t i = 0; i < pointerCount; ++i) {
         const float nx = normalizeX(xs[i]);
         const float ny = normalizeY(ys[i]);
 
-        // Phase 2.3 temporary mobile driving zones:
-        // left 50% = steering strip, bottom-right split = brake/throttle.
-        // This allows two fingers: left thumb steers while right thumb holds gas.
+        // Phase 2.4 temporary mobile driving zones:
+        // left 50% = steering strip, bottom-right split = brake/throttle,
+        // top-right corner = camera mode toggle.
+        if (nx >= 0.75F && ny < 0.50F) {
+            cameraToggle = true;
+            continue;
+        }
+
         if (nx < 0.50F) {
             const float candidateSteering = std::clamp((nx / 0.50F) * 2.0F - 1.0F, -1.0F, 1.0F);
             if (!steeringFound || std::fabs(candidateSteering) > std::fabs(steering)) {
@@ -121,6 +128,7 @@ void InputSystem::rebuildAxesFromTouchState(int32_t pointerCount, const float* x
     snapshot_.steering = steeringFound ? steering : 0.0F;
     snapshot_.throttle = throttle;
     snapshot_.brake = brake;
+    snapshot_.cameraToggle = cameraToggle;
 }
 
 } // namespace roadforge::input

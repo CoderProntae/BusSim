@@ -46,6 +46,7 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     appTimeSeconds_ = 0.0;
     fixedUpdateCounter_ = 0;
     droppedTimeEvents_ = 0;
+    cameraToggleWasDown_ = false;
     if (!renderer_.initialize(window_)) {
         RF_LOGE("Vulkan renderer initialization failed");
         renderer_.shutdown();
@@ -128,6 +129,12 @@ void Engine::frame(int64_t frameTimeNanos) {
     appTimeSeconds_ += deltaSeconds;
 
     const input::InputSnapshot& input = inputSystem_.snapshot();
+    if (input.cameraToggle && !cameraToggleWasDown_) {
+        world_.toggleCameraMode();
+        RF_LOGI("Camera mode toggled");
+    }
+    cameraToggleWasDown_ = input.cameraToggle;
+
     vehicleController_.setCommand(vehicle::VehicleController::commandFromInput(input));
 
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
