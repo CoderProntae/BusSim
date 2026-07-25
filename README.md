@@ -89,7 +89,8 @@ Beklenen davranış:
     ├── 24_FAZ1_RENDER_PROXIES.md
     ├── 25_FAZ1_DYNAMIC_PROXY_SCENE.md
     ├── 26_FAZ1_DEBUG_MESH_ASSETS.md
-    └── 27_FAZ1_CLOSEOUT_FAZ2_PREP.md
+    ├── 27_FAZ1_CLOSEOUT_FAZ2_PREP.md
+    └── 28_FAZ2_VEHICLE_STATE_MODEL.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -123,11 +124,11 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi; World → Render proxy köprüsü başladı, renderer debug sahnesi proxy listesinden dinamik üretiliyor, debug mesh asset verisi renderer ana dosyasından ayrıldı ve Faz 1 kapanış temizliği yapıldı. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 kapanışa alındı. Faz 2 başladı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi; World → Render proxy köprüsü başladı, renderer debug sahnesi proxy listesinden dinamik üretiliyor, debug mesh asset verisi renderer ana dosyasından ayrıldı ve Faz 1 kapanış temizliği yapıldı. Sıradaki parçalar:
 
-1. Faz 2.1 Vehicle/Input model iskeleti.
-2. Faz 2.2 Basit kinematik sürüş prototipi.
-3. Faz 2.3 Fizik backend değerlendirmesi ve raycast süspansiyon hazırlığı.
+1. Faz 2.2 Basit kinematik sürüş prototipi.
+2. Faz 2.3 Mobil sürüş HUD input bölgeleri.
+3. Faz 2.4 Takip/kabin kamera prototipi.
 3. Asset/mesh veri formatı hazırlığı.
 4. Renderer resource abstraction katmanını pipeline/descriptor tarafına genişletmek.
 5. Input action mapping'i gerçek sürüş HUD'una hazırlamak.

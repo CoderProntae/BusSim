@@ -39,6 +39,7 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     inputSystem_.reset();
     world_.reset();
     world_.createDebugRoadEntity();
+    vehicleController_.reset();
     frameStats_.reset();
     previousFrameTimeNanos_ = 0;
     simulationClock_.reset();
@@ -112,9 +113,11 @@ void Engine::frame(int64_t frameTimeNanos) {
     appTimeSeconds_ += deltaSeconds;
 
     const input::InputSnapshot& input = inputSystem_.snapshot();
+    vehicleController_.setCommand(vehicle::VehicleController::commandFromInput(input));
 
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
     for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
+        vehicleController_.fixedUpdate(simulationStep.fixedDeltaSeconds);
         world_.fixedUpdate(simulationStep.fixedDeltaSeconds);
         ++fixedUpdateCounter_;
     }
@@ -127,11 +130,16 @@ void Engine::frame(int64_t frameTimeNanos) {
     frameStats_.recordFrame(deltaSeconds, simulationStep.fixedSteps, simulationStep.droppedExcessTime);
     const core::FrameStatsSnapshot stats = frameStats_.snapshot();
     if (stats.totalFrames > 0 && (stats.totalFrames % 240U) == 0U) {
-        RF_LOGI("FrameStats fps=%.1f frameMs=%.2f fixedSteps=%.2f dropped=%llu",
+        const vehicle::VehicleState& vehicleState = vehicleController_.state();
+        RF_LOGI("FrameStats fps=%.1f frameMs=%.2f fixedSteps=%.2f dropped=%llu vehicle throttle=%.2f brake=%.2f steer=%.2f rpm=%.0f",
                 stats.estimatedFps,
                 stats.averageFrameMs,
                 stats.averageFixedSteps,
-                static_cast<unsigned long long>(stats.droppedTimeEvents));
+                static_cast<unsigned long long>(stats.droppedTimeEvents),
+                vehicleState.throttle,
+                vehicleState.brake,
+                vehicleState.steering,
+                vehicleState.engineRpm);
     }
 
     world_.collectRenderProxies(worldRenderProxies_);

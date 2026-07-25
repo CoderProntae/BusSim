@@ -4,6 +4,7 @@
 #include "roadforge/core/SimulationClock.hpp"
 #include "roadforge/input/InputSystem.hpp"
 #include "roadforge/renderer/VulkanRenderer.hpp"
+#include "roadforge/vehicle/VehicleController.hpp"
 #include "roadforge/world/World.hpp"
 
 #include <android/native_window.h>
@@ -41,6 +42,7 @@ private:
     core::FrameStats frameStats_;
     input::InputSystem inputSystem_;
     world::World world_;
+    vehicle::VehicleController vehicleController_;
     std::vector<world::RenderProxy> worldRenderProxies_;
     std::vector<renderer::DebugRenderProxy> debugRenderProxies_;
     ANativeWindow* window_ = nullptr;
