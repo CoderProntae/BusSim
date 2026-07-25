@@ -143,21 +143,20 @@ void appendOverlayQuad(std::vector<DebugVertex>& vertices,
                        float maxY,
                        float z,
                        const std::array<float, 3>& color) {
-    // The shared world pipeline uses a Vulkan-oriented viewport/projection path.
-    // For the overlay API below, callers pass logical screen-space coordinates
-    // where negative X is left and positive Y is top. Convert them to the actual
-    // NDC orientation consumed by the current pipeline so the panel appears in
-    // the expected top-left corner and text is upright on device.
-    const float actualMinX = -maxX;
-    const float actualMaxX = -minX;
-    const float actualMinY = -maxY;
-    const float actualMaxY = -minY;
+    // Callers pass logical screen coordinates where negative X is left and
+    // positive Y is top. On the tested Android/Vulkan surface, the shared world
+    // pipeline reaches the display with a 90-degree axis transform. Pre-rotate
+    // overlay quads here so labels are upright and bars keep their intended
+    // horizontal/vertical direction on device.
+    const auto toDeviceNdc = [z, &color](float x, float y) -> DebugVertex {
+        return DebugVertex{{ -y, x, z }, { color[0], color[1], color[2] }};
+    };
 
     const uint16_t base = static_cast<uint16_t>(vertices.size());
-    vertices.push_back(DebugVertex{{ actualMinX, actualMinY, z }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ actualMaxX, actualMinY, z }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ actualMaxX, actualMaxY, z }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ actualMinX, actualMaxY, z }, { color[0], color[1], color[2] }});
+    vertices.push_back(toDeviceNdc(minX, minY));
+    vertices.push_back(toDeviceNdc(maxX, minY));
+    vertices.push_back(toDeviceNdc(maxX, maxY));
+    vertices.push_back(toDeviceNdc(minX, maxY));
     indices.push_back(base);
     indices.push_back(static_cast<uint16_t>(base + 1));
     indices.push_back(static_cast<uint16_t>(base + 2));
