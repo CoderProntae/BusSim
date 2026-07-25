@@ -47,6 +47,10 @@ void VehicleController::setCommand(const VehicleCommand& command) {
     command_.retarder = std::clamp(command_.retarder, 0.0F, 1.0F);
 }
 
+void VehicleController::overrideState(const VehicleState& state) {
+    state_ = state;
+}
+
 void VehicleController::fixedUpdate(double fixedDeltaSeconds) {
     const float dt = static_cast<float>(std::clamp(fixedDeltaSeconds, 0.0, 0.1));
 

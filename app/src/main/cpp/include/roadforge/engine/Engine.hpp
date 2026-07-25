@@ -3,6 +3,8 @@
 #include "roadforge/core/FrameStats.hpp"
 #include "roadforge/core/SimulationClock.hpp"
 #include "roadforge/input/InputSystem.hpp"
+#include "roadforge/physics/NullPhysicsWorld.hpp"
+#include "roadforge/physics/RaycastVehicleBackend.hpp"
 #include "roadforge/renderer/VulkanRenderer.hpp"
 #include "roadforge/vehicle/VehicleController.hpp"
 #include "roadforge/world/World.hpp"
@@ -43,6 +45,9 @@ private:
     core::FrameStats frameStats_;
     input::InputSystem inputSystem_;
     world::World world_;
+    physics::NullPhysicsWorld physicsWorld_;
+    physics::RaycastVehicleBackend vehiclePhysicsBackend_;
+    physics::VehiclePhysicsTelemetry vehiclePhysicsTelemetry_{};
     vehicle::VehicleController vehicleController_;
     std::vector<world::RenderProxy> worldRenderProxies_;
     std::vector<renderer::DebugRenderProxy> debugRenderProxies_;

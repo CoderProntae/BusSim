@@ -11,7 +11,8 @@ constexpr double kNanosToSeconds = 1.0 / 1'000'000'000.0;
 constexpr double kMaxDeltaSeconds = 1.0 / 15.0;
 } // namespace
 
-Engine::Engine() {
+Engine::Engine()
+    : vehiclePhysicsBackend_(physicsWorld_) {
     RF_LOGI("Engine created");
 }
 
@@ -40,6 +41,11 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     world_.reset();
     world_.createDebugRoadEntity();
     vehicleController_.reset();
+    physicsWorld_.reset();
+    math::Transform initialVehicleTransform{};
+    initialVehicleTransform.position = { vehicleController_.state().positionX, 0.0F, vehicleController_.state().positionZ };
+    vehiclePhysicsBackend_.reset(physics::makeDefaultBusPhysicsConfig(), initialVehicleTransform);
+    vehiclePhysicsTelemetry_ = {};
     frameStats_.reset();
     previousFrameTimeNanos_ = 0;
     simulationClock_.reset();
@@ -140,6 +146,13 @@ void Engine::frame(int64_t frameTimeNanos) {
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
     for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
         vehicleController_.fixedUpdate(simulationStep.fixedDeltaSeconds);
+        vehicle::VehicleState vehicleState = vehicleController_.state();
+        math::Transform vehicleTransform{};
+        vehicleTransform.position = { vehicleState.positionX, 0.0F, vehicleState.positionZ };
+        vehicleTransform.rotation = math::quatFromAxisAngle({ 0.0F, 1.0F, 0.0F }, vehicleState.headingRadians);
+        vehiclePhysicsBackend_.step(vehicleController_.command(), simulationStep.fixedDeltaSeconds, vehicleTransform, vehicleState, vehiclePhysicsTelemetry_);
+        physicsWorld_.step(simulationStep.fixedDeltaSeconds);
+        vehicleController_.overrideState(vehicleState);
         world_.fixedUpdate(simulationStep.fixedDeltaSeconds, vehicleController_.state());
         ++fixedUpdateCounter_;
     }
@@ -162,6 +175,11 @@ void Engine::frame(int64_t frameTimeNanos) {
                 vehicleState.brake,
                 vehicleState.steering,
                 vehicleState.engineRpm);
+        RF_LOGI("VehiclePhysics grounded=%u compression=%.2f longSlip=%.2f latSlip=%.2f",
+                vehicleState.groundedWheelCount,
+                vehicleState.averageSuspensionCompression,
+                vehicleState.longitudinalSlip,
+                vehicleState.lateralSlip);
     }
 
     world_.collectRenderProxies(worldRenderProxies_);

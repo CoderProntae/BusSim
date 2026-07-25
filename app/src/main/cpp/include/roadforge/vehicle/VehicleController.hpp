@@ -20,6 +20,7 @@ public:
     [[nodiscard]] static VehicleCommand commandFromInput(const input::InputSnapshot& input);
 
     void setCommand(const VehicleCommand& command);
+    void overrideState(const VehicleState& state);
     void fixedUpdate(double fixedDeltaSeconds);
 
     [[nodiscard]] const VehicleCommand& command() const { return command_; }

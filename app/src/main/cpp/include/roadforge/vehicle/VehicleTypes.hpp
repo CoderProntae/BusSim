@@ -36,6 +36,11 @@ struct VehicleState final {
     float positionX = 0.0F;
     float positionZ = 3.7F;
     float headingRadians = 0.0F;
+
+    uint32_t groundedWheelCount = 0;
+    float averageSuspensionCompression = 0.0F;
+    float longitudinalSlip = 0.0F;
+    float lateralSlip = 0.0F;
 };
 
 } // namespace roadforge::vehicle
