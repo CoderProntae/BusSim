@@ -32,10 +32,20 @@ struct VehicleState final {
     float engineRpm = 650.0F;
     int32_t selectedGear = 1;
     float steeringWheelDegrees = 0.0F;
+    float engineTorqueNm = 0.0F;
+    float driveForce = 0.0F;
+    float brakeForce = 0.0F;
 
     float positionX = 0.0F;
     float positionZ = 3.7F;
     float headingRadians = 0.0F;
+    float odometerMeters = 0.0F;
+    float tripSeconds = 0.0F;
+
+    float fuelLiters = 180.0F;
+    float fuelCapacityLiters = 180.0F;
+    float damage01 = 0.0F;
+    float offRoad01 = 0.0F;
 
     uint32_t groundedWheelCount = 0;
     float averageSuspensionCompression = 0.0F;
