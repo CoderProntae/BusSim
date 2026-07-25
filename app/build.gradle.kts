@@ -11,8 +11,8 @@ android {
         applicationId = "com.roadforge.bussim"
         minSdk = 29
         targetSdk = 35
-        versionCode = 30
-        versionName = "0.2.5-faz2-test-track"
+        versionCode = 31
+        versionName = "0.2.6-faz2-physics-adapter"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

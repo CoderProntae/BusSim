@@ -64,6 +64,7 @@ add_library(roadforge SHARED
     src/core/SimulationClock.cpp
     src/engine/Engine.cpp
     src/input/InputSystem.cpp
+    src/physics/NullPhysicsWorld.cpp
     src/platform/android/JniBridge.cpp
     src/renderer/DebugMeshAssets.cpp
     src/renderer/VulkanRenderer.cpp
