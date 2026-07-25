@@ -65,6 +65,7 @@ add_library(roadforge SHARED
     src/engine/Engine.cpp
     src/input/InputSystem.cpp
     src/platform/android/JniBridge.cpp
+    src/renderer/DebugMeshAssets.cpp
     src/renderer/VulkanRenderer.cpp
     src/renderer/VulkanResources.cpp
     src/world/World.cpp

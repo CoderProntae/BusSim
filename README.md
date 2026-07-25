@@ -87,7 +87,8 @@ Beklenen davranış:
     ├── 22_FAZ1_FIXED_DEBUG_CAMERA.md
     ├── 23_FAZ1_BUS_ROAD_SCENE.md
     ├── 24_FAZ1_RENDER_PROXIES.md
-    └── 25_FAZ1_DYNAMIC_PROXY_SCENE.md
+    ├── 25_FAZ1_DYNAMIC_PROXY_SCENE.md
+    └── 26_FAZ1_DEBUG_MESH_ASSETS.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -121,10 +122,10 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi; World → Render proxy köprüsü başladı ve renderer debug sahnesi proxy listesinden dinamik üretiliyor. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi; World → Render proxy köprüsü başladı, renderer debug sahnesi proxy listesinden dinamik üretiliyor ve debug mesh asset verisi renderer ana dosyasından ayrıldı. Sıradaki parçalar:
 
-1. Asset/mesh veri formatı hazırlığı.
-2. Mesh data tanımlarını renderer kaynak kodundan ayırmak.
+1. Faz 1 kapanış cleanup + stabil APK + Faz 2 sürüş hazırlığı.
+2. Faz 2 araç/sürüş vertical slice başlangıcı.
 3. Asset/mesh veri formatı hazırlığı.
 4. Renderer resource abstraction katmanını pipeline/descriptor tarafına genişletmek.
 5. Input action mapping'i gerçek sürüş HUD'una hazırlamak.
