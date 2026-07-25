@@ -14,6 +14,7 @@ void World::reset() {
     debugRoadEntity_ = {};
     debugBusEntity_ = {};
     debugRoadTransformCache_ = {};
+    debugBusTransformCache_ = {};
     debugCamera_ = {};
     cameraLateralOffset_ = 0.0F;
     cameraDistance_ = 7.65F;
@@ -54,6 +55,7 @@ void World::destroyEntity(Entity entity) {
     }
     if (debugBusEntity_ == entity) {
         debugBusEntity_ = {};
+        debugBusTransformCache_ = {};
     }
 }
 
@@ -129,11 +131,12 @@ Entity World::createDebugBusEntity() {
 
     debugBusEntity_ = createEntity();
     math::Transform transformValue{};
-    transformValue.position = { 0.0F, 0.0F, 0.0F };
+    transformValue.position = { 0.0F, 0.0F, 3.7F };
     transformValue.rotation = math::quatIdentity();
     transformValue.scale = { 1.0F, 1.0F, 1.0F };
     addTransform(debugBusEntity_, transformValue);
     addMesh(debugBusEntity_, MeshComponent{ MeshKind::BusPlaceholder, 3.0F, true });
+    debugBusTransformCache_ = transformValue;
     return debugBusEntity_;
 }
 
@@ -158,38 +161,39 @@ void World::collectRenderProxies(std::vector<RenderProxy>& out) const {
     }
 }
 
-void World::fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& cameraInput) {
+void World::fixedUpdate(double fixedDeltaSeconds, const vehicle::VehicleState& vehicleState) {
     const double safeDelta = std::clamp(fixedDeltaSeconds, 0.0, 0.1);
     simulationSeconds_ += safeDelta;
 
-    if (cameraInput.active) {
-        const float dt = static_cast<float>(safeDelta);
-        // Debug camera is now a simple track/dolly camera, not an orbit camera.
-        // Left/right moves the camera position sideways with the target, so the
-        // diagnostic square should slide on screen instead of appearing to spin.
-        cameraLateralOffset_ += cameraInput.steering * dt * 3.0F;
-        cameraLateralOffset_ = std::clamp(cameraLateralOffset_, -4.0F, 4.0F);
-        cameraDistance_ += (cameraInput.brake - cameraInput.throttle) * dt * 3.5F;
-        cameraDistance_ = std::clamp(cameraDistance_, 3.25F, 10.5F);
+    TransformComponent* roadTransform = transform(debugRoadEntity_);
+    if (roadTransform != nullptr) {
+        roadTransform->transform.rotation = math::quatIdentity();
+        debugRoadTransformCache_ = roadTransform->transform;
     }
 
-    debugCamera_.target = { cameraLateralOffset_, 0.0F, 3.0F };
+    TransformComponent* busTransform = transform(debugBusEntity_);
+    if (busTransform != nullptr) {
+        busTransform->transform.position = { vehicleState.positionX, 0.0F, vehicleState.positionZ };
+        busTransform->transform.rotation = math::quatFromAxisAngle({ 0.0F, 1.0F, 0.0F }, vehicleState.headingRadians);
+        busTransform->transform.scale = { 1.0F, 1.0F, 1.0F };
+        debugBusTransformCache_ = busTransform->transform;
+    }
+
+    const float heading = vehicleState.headingRadians;
+    const math::Vec3 forward{ std::sin(heading), 0.0F, std::cos(heading) };
+    const math::Vec3 busPosition{ vehicleState.positionX, 0.0F, vehicleState.positionZ };
+    debugCamera_.target = {
+        busPosition.x + (forward.x * 1.8F),
+        0.42F,
+        busPosition.z + (forward.z * 1.8F),
+    };
     debugCamera_.up = { 0.0F, 1.0F, 0.0F };
     debugCamera_.fovYRadians = 60.0F * 0.01745329252F;
     debugCamera_.eye = {
-        cameraLateralOffset_,
-        cameraHeight_,
-        debugCamera_.target.z - cameraDistance_,
+        busPosition.x - (forward.x * cameraDistance_),
+        cameraHeight_ + 1.05F,
+        busPosition.z - (forward.z * cameraDistance_),
     };
-
-    TransformComponent* roadTransform = transform(debugRoadEntity_);
-    if (roadTransform == nullptr) {
-        return;
-    }
-
-    // Keep the diagnostic square itself stable. When the perspective changes, it is the camera moving, not the road/square spinning.
-    roadTransform->transform.rotation = math::quatIdentity();
-    debugRoadTransformCache_ = roadTransform->transform;
 }
 
 bool World::indexInRange(Entity entity) const {

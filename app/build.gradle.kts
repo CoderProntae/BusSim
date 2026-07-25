@@ -11,8 +11,8 @@ android {
         applicationId = "com.roadforge.bussim"
         minSdk = 29
         targetSdk = 35
-        versionCode = 26
-        versionName = "0.2.1-faz2-vehicle-state"
+        versionCode = 27
+        versionName = "0.2.2-faz2-kinematic-bus"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

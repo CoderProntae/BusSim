@@ -1,6 +1,7 @@
 #pragma once
 
 #include "roadforge/math/Transform.hpp"
+#include "roadforge/vehicle/VehicleTypes.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -82,7 +83,7 @@ public:
     Entity createDebugRoadEntity();
     Entity createDebugBusEntity();
     void collectRenderProxies(std::vector<RenderProxy>& out) const;
-    void fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& cameraInput = {});
+    void fixedUpdate(double fixedDeltaSeconds, const vehicle::VehicleState& vehicleState);
 
     [[nodiscard]] const math::Transform& debugRoadTransform() const { return debugRoadTransformCache_; }
     [[nodiscard]] Entity debugRoadEntity() const { return debugRoadEntity_; }
@@ -105,6 +106,7 @@ private:
     Entity debugRoadEntity_{};
     Entity debugBusEntity_{};
     math::Transform debugRoadTransformCache_{};
+    math::Transform debugBusTransformCache_{};
     DebugCamera debugCamera_{};
     float cameraLateralOffset_ = 0.0F;
     float cameraDistance_ = 7.65F;

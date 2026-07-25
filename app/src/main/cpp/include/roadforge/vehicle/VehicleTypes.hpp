@@ -32,6 +32,10 @@ struct VehicleState final {
     float engineRpm = 650.0F;
     int32_t selectedGear = 1;
     float steeringWheelDegrees = 0.0F;
+
+    float positionX = 0.0F;
+    float positionZ = 3.7F;
+    float headingRadians = 0.0F;
 };
 
 } // namespace roadforge::vehicle

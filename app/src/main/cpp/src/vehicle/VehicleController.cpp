@@ -11,11 +11,19 @@ constexpr float kMaxPreviewRpm = 1800.0F;
 constexpr float kMaxSteeringWheelDegrees = 540.0F;
 constexpr float kPedalSlewPerSecond = 8.0F;
 constexpr float kSteerSlewPerSecond = 6.0F;
+constexpr float kMaxPreviewSpeedMetersPerSecond = 10.0F;
+constexpr float kThrottleAcceleration = 3.2F;
+constexpr float kBrakeDeceleration = 6.5F;
+constexpr float kRollingDrag = 0.45F;
+constexpr float kMaxTurnRateRadiansPerSecond = 0.85F;
 } // namespace
 
 void VehicleController::reset() {
     command_ = {};
     state_ = {};
+    state_.positionX = 0.0F;
+    state_.positionZ = 3.7F;
+    state_.headingRadians = 0.0F;
 }
 
 VehicleCommand VehicleController::commandFromInput(const input::InputSnapshot& input) {
@@ -50,9 +58,26 @@ void VehicleController::fixedUpdate(double fixedDeltaSeconds) {
     state_.gearMode = command_.gearMode;
     state_.selectedGear = command_.gearMode == GearMode::Reverse ? -1 : (command_.gearMode == GearMode::Drive ? 1 : 0);
 
-    // Preview values only. Real longitudinal dynamics start in Phase 2.2+.
-    state_.speedMetersPerSecond = 0.0F;
-    state_.engineRpm = kIdleRpm + (state_.throttle * (kMaxPreviewRpm - kIdleRpm));
+    // Phase 2.2 kinematic prototype. This is not the final tire/suspension
+    // physics; it is a deterministic first drive loop so input visibly moves
+    // the placeholder bus before the physics backend is introduced.
+    const float acceleration = (state_.throttle * kThrottleAcceleration)
+        - (state_.brake * kBrakeDeceleration)
+        - (state_.speedMetersPerSecond * kRollingDrag);
+    state_.speedMetersPerSecond = std::clamp(
+        state_.speedMetersPerSecond + (acceleration * dt),
+        0.0F,
+        kMaxPreviewSpeedMetersPerSecond);
+
+    const float speedRatio = kMaxPreviewSpeedMetersPerSecond > 0.0F
+        ? std::clamp(state_.speedMetersPerSecond / kMaxPreviewSpeedMetersPerSecond, 0.0F, 1.0F)
+        : 0.0F;
+    state_.headingRadians += state_.steering * speedRatio * kMaxTurnRateRadiansPerSecond * dt;
+
+    state_.positionX += std::sin(state_.headingRadians) * state_.speedMetersPerSecond * dt;
+    state_.positionZ += std::cos(state_.headingRadians) * state_.speedMetersPerSecond * dt;
+
+    state_.engineRpm = kIdleRpm + (state_.throttle * (kMaxPreviewRpm - kIdleRpm)) + (speedRatio * 700.0F);
     state_.steeringWheelDegrees = state_.steering * kMaxSteeringWheelDegrees;
 }
 

@@ -118,7 +118,7 @@ void Engine::frame(int64_t frameTimeNanos) {
     const core::SimulationClock::AdvanceResult simulationStep = simulationClock_.advance(deltaSeconds);
     for (uint32_t step = 0; step < simulationStep.fixedSteps; ++step) {
         vehicleController_.fixedUpdate(simulationStep.fixedDeltaSeconds);
-        world_.fixedUpdate(simulationStep.fixedDeltaSeconds);
+        world_.fixedUpdate(simulationStep.fixedDeltaSeconds, vehicleController_.state());
         ++fixedUpdateCounter_;
     }
 

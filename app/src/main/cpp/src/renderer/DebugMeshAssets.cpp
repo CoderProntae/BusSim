@@ -168,31 +168,31 @@ void appendRoadSurfaceMesh(std::vector<DebugVertex>& vertices, std::vector<uint1
 }
 
 void appendBusPlaceholderMesh(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
-    appendBox(vertices, indices, -0.82F, 0.12F, 2.65F, 0.82F, 0.82F, 4.75F, { 0.95F, 0.46F, 0.08F });
-    appendBox(vertices, indices, -0.70F, 0.82F, 2.90F, 0.70F, 1.05F, 4.40F, { 0.88F, 0.38F, 0.06F });
+    appendBox(vertices, indices, -0.82F, 0.12F, -1.05F, 0.82F, 0.82F, 1.05F, { 0.95F, 0.46F, 0.08F });
+    appendBox(vertices, indices, -0.70F, 0.82F, -0.80F, 0.70F, 1.05F, 0.70F, { 0.88F, 0.38F, 0.06F });
 
     appendFace(vertices, indices,
-               DebugVertex{{ -0.835F, 0.48F, 2.88F }, { 0.05F, 0.14F, 0.22F }},
-               DebugVertex{{ -0.835F, 0.48F, 4.44F }, { 0.05F, 0.14F, 0.22F }},
-               DebugVertex{{ -0.835F, 0.75F, 4.44F }, { 0.08F, 0.24F, 0.36F }},
-               DebugVertex{{ -0.835F, 0.75F, 2.88F }, { 0.08F, 0.24F, 0.36F }});
+               DebugVertex{{ -0.835F, 0.48F, -0.82F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ -0.835F, 0.48F, 0.74F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ -0.835F, 0.75F, 0.74F }, { 0.08F, 0.24F, 0.36F }},
+               DebugVertex{{ -0.835F, 0.75F, -0.82F }, { 0.08F, 0.24F, 0.36F }});
     appendFace(vertices, indices,
-               DebugVertex{{ 0.835F, 0.48F, 4.44F }, { 0.05F, 0.14F, 0.22F }},
-               DebugVertex{{ 0.835F, 0.48F, 2.88F }, { 0.05F, 0.14F, 0.22F }},
-               DebugVertex{{ 0.835F, 0.75F, 2.88F }, { 0.08F, 0.24F, 0.36F }},
-               DebugVertex{{ 0.835F, 0.75F, 4.44F }, { 0.08F, 0.24F, 0.36F }});
+               DebugVertex{{ 0.835F, 0.48F, 0.74F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.835F, 0.48F, -0.82F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.835F, 0.75F, -0.82F }, { 0.08F, 0.24F, 0.36F }},
+               DebugVertex{{ 0.835F, 0.75F, 0.74F }, { 0.08F, 0.24F, 0.36F }});
     appendFace(vertices, indices,
-               DebugVertex{{ -0.55F, 0.47F, 2.635F }, { 0.05F, 0.14F, 0.22F }},
-               DebugVertex{{ 0.55F, 0.47F, 2.635F }, { 0.05F, 0.14F, 0.22F }},
-               DebugVertex{{ 0.55F, 0.76F, 2.635F }, { 0.08F, 0.24F, 0.36F }},
-               DebugVertex{{ -0.55F, 0.76F, 2.635F }, { 0.08F, 0.24F, 0.36F }});
+               DebugVertex{{ -0.55F, 0.47F, -1.065F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.55F, 0.47F, -1.065F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.55F, 0.76F, -1.065F }, { 0.08F, 0.24F, 0.36F }},
+               DebugVertex{{ -0.55F, 0.76F, -1.065F }, { 0.08F, 0.24F, 0.36F }});
 
-    appendBox(vertices, indices, -0.95F, 0.02F, 2.95F, -0.72F, 0.32F, 3.35F, { 0.015F, 0.015F, 0.018F });
-    appendBox(vertices, indices, -0.95F, 0.02F, 4.05F, -0.72F, 0.32F, 4.45F, { 0.015F, 0.015F, 0.018F });
-    appendBox(vertices, indices, 0.72F, 0.02F, 2.95F, 0.95F, 0.32F, 3.35F, { 0.015F, 0.015F, 0.018F });
-    appendBox(vertices, indices, 0.72F, 0.02F, 4.05F, 0.95F, 0.32F, 4.45F, { 0.015F, 0.015F, 0.018F });
-    appendBox(vertices, indices, -0.48F, 0.24F, 2.58F, -0.22F, 0.36F, 2.64F, { 1.0F, 0.92F, 0.35F });
-    appendBox(vertices, indices, 0.22F, 0.24F, 2.58F, 0.48F, 0.36F, 2.64F, { 1.0F, 0.92F, 0.35F });
+    appendBox(vertices, indices, -0.95F, 0.02F, -0.75F, -0.72F, 0.32F, -0.35F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, -0.95F, 0.02F, 0.35F, -0.72F, 0.32F, 0.75F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, 0.72F, 0.02F, -0.75F, 0.95F, 0.32F, -0.35F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, 0.72F, 0.02F, 0.35F, 0.95F, 0.32F, 0.75F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, -0.48F, 0.24F, -1.12F, -0.22F, 0.36F, -1.06F, { 1.0F, 0.92F, 0.35F });
+    appendBox(vertices, indices, 0.22F, 0.24F, -1.12F, 0.48F, 0.36F, -1.06F, { 1.0F, 0.92F, 0.35F });
 }
 
 } // namespace
