@@ -37,44 +37,6 @@ struct PushConstants final {
     float mvp[16];
 };
 
-const std::array<uint8_t, 7>& glyphRows(char c) {
-    static constexpr std::array<uint8_t, 7> kA = { 0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 };
-    static constexpr std::array<uint8_t, 7> kB = { 0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110 };
-    static constexpr std::array<uint8_t, 7> kD = { 0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110 };
-    static constexpr std::array<uint8_t, 7> kF = { 0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000 };
-    static constexpr std::array<uint8_t, 7> kG = { 0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110 };
-    static constexpr std::array<uint8_t, 7> kI = { 0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111 };
-    static constexpr std::array<uint8_t, 7> kL = { 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111 };
-    static constexpr std::array<uint8_t, 7> kM = { 0b10001, 0b11011, 0b10101, 0b10101, 0b10001, 0b10001, 0b10001 };
-    static constexpr std::array<uint8_t, 7> kO = { 0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 };
-    static constexpr std::array<uint8_t, 7> kP = { 0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000 };
-    static constexpr std::array<uint8_t, 7> kR = { 0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001 };
-    static constexpr std::array<uint8_t, 7> kS = { 0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110 };
-    static constexpr std::array<uint8_t, 7> kT = { 0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100 };
-    static constexpr std::array<uint8_t, 7> kU = { 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 };
-    static constexpr std::array<uint8_t, 7> kX = { 0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001 };
-    static constexpr std::array<uint8_t, 7> kBlank = { 0, 0, 0, 0, 0, 0, 0 };
-
-    switch (c) {
-        case 'A': return kA;
-        case 'B': return kB;
-        case 'D': return kD;
-        case 'F': return kF;
-        case 'G': return kG;
-        case 'I': return kI;
-        case 'L': return kL;
-        case 'M': return kM;
-        case 'O': return kO;
-        case 'P': return kP;
-        case 'R': return kR;
-        case 'S': return kS;
-        case 'T': return kT;
-        case 'U': return kU;
-        case 'X': return kX;
-        default: return kBlank;
-    }
-}
-
 const char* vkResultName(VkResult result) {
     switch (result) {
         case VK_SUCCESS: return "VK_SUCCESS";
