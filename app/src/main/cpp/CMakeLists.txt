@@ -71,6 +71,7 @@ add_library(roadforge SHARED
     src/renderer/VulkanRenderer.cpp
     src/renderer/VulkanResources.cpp
     src/vehicle/VehicleController.cpp
+    src/vehicle/VehicleEvents.cpp
     src/world/World.cpp
 )
 

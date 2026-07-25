@@ -46,6 +46,7 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     initialVehicleTransform.position = { vehicleController_.state().positionX, 0.0F, vehicleController_.state().positionZ };
     vehiclePhysicsBackend_.reset(physics::makeDefaultBusPhysicsConfig(), initialVehicleTransform);
     vehiclePhysicsTelemetry_ = {};
+    vehicleEventCollector_.reset();
     frameStats_.reset();
     previousFrameTimeNanos_ = 0;
     simulationClock_.reset();
@@ -153,6 +154,14 @@ void Engine::frame(int64_t frameTimeNanos) {
         vehiclePhysicsBackend_.step(vehicleController_.command(), simulationStep.fixedDeltaSeconds, vehicleTransform, vehicleState, vehiclePhysicsTelemetry_);
         physicsWorld_.step(simulationStep.fixedDeltaSeconds);
         vehicleController_.overrideState(vehicleState);
+        vehicleEventCollector_.update(vehicleController_.state());
+        for (const vehicle::VehicleEvent& event : vehicleEventCollector_.events()) {
+            RF_LOGI("VehicleEvent type=%u value=%.2f odometer=%.1f trip=%.1f",
+                    static_cast<unsigned>(event.type),
+                    event.value,
+                    event.odometerMeters,
+                    event.tripSeconds);
+        }
         world_.fixedUpdate(simulationStep.fixedDeltaSeconds, vehicleController_.state());
         ++fixedUpdateCounter_;
     }
@@ -175,11 +184,16 @@ void Engine::frame(int64_t frameTimeNanos) {
                 vehicleState.brake,
                 vehicleState.steering,
                 vehicleState.engineRpm);
-        RF_LOGI("VehiclePhysics grounded=%u compression=%.2f longSlip=%.2f latSlip=%.2f",
-                vehicleState.groundedWheelCount,
-                vehicleState.averageSuspensionCompression,
-                vehicleState.longitudinalSlip,
-                vehicleState.lateralSlip);
+        const vehicle::DrivingTelemetrySnapshot& drivingTelemetry = vehicleEventCollector_.telemetry();
+        RF_LOGI("VehiclePhysics grounded=%u compression=%.2f longSlip=%.2f latSlip=%.2f speedKmh=%.1f fuel=%.0f%% damage=%.0f%% offRoad=%d",
+                drivingTelemetry.groundedWheelCount,
+                drivingTelemetry.suspensionCompression,
+                drivingTelemetry.longitudinalSlip,
+                drivingTelemetry.lateralSlip,
+                drivingTelemetry.speedKmh,
+                drivingTelemetry.fuel01 * 100.0F,
+                drivingTelemetry.damage01 * 100.0F,
+                drivingTelemetry.offRoad ? 1 : 0);
     }
 
     world_.collectRenderProxies(worldRenderProxies_);

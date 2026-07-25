@@ -7,6 +7,7 @@
 #include "roadforge/physics/RaycastVehicleBackend.hpp"
 #include "roadforge/renderer/VulkanRenderer.hpp"
 #include "roadforge/vehicle/VehicleController.hpp"
+#include "roadforge/vehicle/VehicleEvents.hpp"
 #include "roadforge/world/World.hpp"
 
 #include <android/native_window.h>
@@ -49,6 +50,7 @@ private:
     physics::RaycastVehicleBackend vehiclePhysicsBackend_;
     physics::VehiclePhysicsTelemetry vehiclePhysicsTelemetry_{};
     vehicle::VehicleController vehicleController_;
+    vehicle::VehicleEventCollector vehicleEventCollector_;
     std::vector<world::RenderProxy> worldRenderProxies_;
     std::vector<renderer::DebugRenderProxy> debugRenderProxies_;
     ANativeWindow* window_ = nullptr;
