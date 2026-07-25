@@ -1317,18 +1317,10 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         vkCmdDrawIndexed(commandBuffer, debugIndexCount_, 1, 0, 0, 0);
     }
 
-    if (updateDebugOverlayBuffers(currentFrame_) && overlayIndexCounts_[currentFrame_] > 0) {
-        const VkBuffer overlayVertexBuffers[] = { overlayVertexBuffers_[currentFrame_].buffer };
-        const VkDeviceSize overlayOffsets[] = { 0 };
-        const math::Mat4 overlayMvp = math::identity();
-        PushConstants overlayPushConstants{};
-        std::memcpy(overlayPushConstants.mvp, overlayMvp.data(), sizeof(overlayPushConstants.mvp));
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
-        vkCmdPushConstants(commandBuffer, pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &overlayPushConstants);
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, overlayVertexBuffers, overlayOffsets);
-        vkCmdBindIndexBuffer(commandBuffer, overlayIndexBuffers_[currentFrame_].buffer, 0, VK_INDEX_TYPE_UINT16);
-        vkCmdDrawIndexed(commandBuffer, overlayIndexCounts_[currentFrame_], 1, 0, 0, 0);
-    }
+    // Temporarily disabled: the shared 3D pipeline is not a reliable place for
+    // screen-space UI on all Android surface transforms. We will bring the stats
+    // panel back with a dedicated 2D overlay pipeline instead of spending more
+    // time compensating this path.
 
     vkCmdEndRenderPass(commandBuffer);
 

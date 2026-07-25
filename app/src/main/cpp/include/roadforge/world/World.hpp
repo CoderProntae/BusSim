@@ -94,7 +94,7 @@ private:
     Entity debugRoadEntity_{};
     math::Transform debugRoadTransformCache_{};
     DebugCamera debugCamera_{};
-    float cameraOrbitYawRadians_ = 0.0F;
+    float cameraLateralOffset_ = 0.0F;
     float cameraDistance_ = 7.65F;
     float cameraHeight_ = 1.65F;
     double simulationSeconds_ = 0.0;

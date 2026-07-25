@@ -13,7 +13,7 @@ void World::reset() {
     debugRoadEntity_ = {};
     debugRoadTransformCache_ = {};
     debugCamera_ = {};
-    cameraOrbitYawRadians_ = 0.0F;
+    cameraLateralOffset_ = 0.0F;
     cameraDistance_ = 7.65F;
     cameraHeight_ = 1.65F;
     simulationSeconds_ = 0.0;
@@ -122,18 +122,22 @@ void World::fixedUpdate(double fixedDeltaSeconds, const CameraControlInput& came
 
     if (cameraInput.active) {
         const float dt = static_cast<float>(safeDelta);
-        cameraOrbitYawRadians_ += cameraInput.steering * dt * 1.15F;
+        // Debug camera is now a simple track/dolly camera, not an orbit camera.
+        // Left/right moves the camera position sideways with the target, so the
+        // diagnostic square should slide on screen instead of appearing to spin.
+        cameraLateralOffset_ += cameraInput.steering * dt * 3.0F;
+        cameraLateralOffset_ = std::clamp(cameraLateralOffset_, -4.0F, 4.0F);
         cameraDistance_ += (cameraInput.brake - cameraInput.throttle) * dt * 3.5F;
         cameraDistance_ = std::clamp(cameraDistance_, 3.25F, 10.5F);
     }
 
-    debugCamera_.target = { 0.0F, 0.0F, 3.0F };
+    debugCamera_.target = { cameraLateralOffset_, 0.0F, 3.0F };
     debugCamera_.up = { 0.0F, 1.0F, 0.0F };
     debugCamera_.fovYRadians = 60.0F * 0.01745329252F;
     debugCamera_.eye = {
-        std::sin(cameraOrbitYawRadians_) * cameraDistance_,
+        cameraLateralOffset_,
         cameraHeight_,
-        debugCamera_.target.z - (std::cos(cameraOrbitYawRadians_) * cameraDistance_),
+        debugCamera_.target.z - cameraDistance_,
     };
 
     TransformComponent* roadTransform = transform(debugRoadEntity_);
