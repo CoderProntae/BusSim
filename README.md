@@ -84,7 +84,8 @@ Beklenen davranış:
     ├── 19_FAZ1_OVERLAY_AXIS_FIX.md
     ├── 20_FAZ1_OVERLAY_TOP_LEFT_FIX.md
     ├── 21_FAZ1_TRACK_CAMERA.md
-    └── 22_FAZ1_FIXED_DEBUG_CAMERA.md
+    ├── 22_FAZ1_FIXED_DEBUG_CAMERA.md
+    └── 23_FAZ1_BUS_ROAD_SCENE.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -118,10 +119,10 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı ve debug kamera sabitlenerek problemli geçici hareket kontrolleri devre dışı bırakıldı. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi. Sıradaki parçalar:
 
-1. Basit 3D otobüs/yol debug sahnesi.
-2. Asset/mesh veri formatı hazırlığı.
+1. Asset/mesh veri formatı hazırlığı.
+2. Placeholder otobüsü World/Render proxy üzerinden ayrı mesh kind olarak çizmek.
 3. Asset/mesh veri formatı hazırlığı.
 4. Renderer resource abstraction katmanını pipeline/descriptor tarafına genişletmek.
 5. Input action mapping'i gerçek sürüş HUD'una hazırlamak.

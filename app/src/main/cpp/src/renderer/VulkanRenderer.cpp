@@ -41,19 +41,17 @@ struct PushConstants final {
     float mvp[16];
 };
 
-void appendQuad(std::vector<DebugVertex>& vertices,
+void appendFace(std::vector<DebugVertex>& vertices,
                 std::vector<uint16_t>& indices,
-                float minX,
-                float minZ,
-                float maxX,
-                float maxZ,
-                float y,
-                const std::array<float, 3>& color) {
+                const DebugVertex& a,
+                const DebugVertex& b,
+                const DebugVertex& c,
+                const DebugVertex& d) {
     const uint16_t base = static_cast<uint16_t>(vertices.size());
-    vertices.push_back(DebugVertex{{ minX, y, minZ }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ maxX, y, minZ }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ maxX, y, maxZ }, { color[0], color[1], color[2] }});
-    vertices.push_back(DebugVertex{{ minX, y, maxZ }, { color[0], color[1], color[2] }});
+    vertices.push_back(a);
+    vertices.push_back(b);
+    vertices.push_back(c);
+    vertices.push_back(d);
     indices.push_back(base);
     indices.push_back(static_cast<uint16_t>(base + 1));
     indices.push_back(static_cast<uint16_t>(base + 2));
@@ -62,8 +60,70 @@ void appendQuad(std::vector<DebugVertex>& vertices,
     indices.push_back(base);
 }
 
+void appendQuad(std::vector<DebugVertex>& vertices,
+                std::vector<uint16_t>& indices,
+                float minX,
+                float minZ,
+                float maxX,
+                float maxZ,
+                float y,
+                const std::array<float, 3>& color) {
+    appendFace(vertices,
+               indices,
+               DebugVertex{{ minX, y, minZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ maxX, y, minZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ maxX, y, maxZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ minX, y, maxZ }, { color[0], color[1], color[2] }});
+}
+
+void appendBox(std::vector<DebugVertex>& vertices,
+               std::vector<uint16_t>& indices,
+               float minX,
+               float minY,
+               float minZ,
+               float maxX,
+               float maxY,
+               float maxZ,
+               const std::array<float, 3>& color) {
+    const std::array<float, 3> top = { std::min(color[0] * 1.18F, 1.0F), std::min(color[1] * 1.18F, 1.0F), std::min(color[2] * 1.18F, 1.0F) };
+    const std::array<float, 3> side = { color[0] * 0.92F, color[1] * 0.92F, color[2] * 0.92F };
+    const std::array<float, 3> dark = { color[0] * 0.72F, color[1] * 0.72F, color[2] * 0.72F };
+
+    appendFace(vertices, indices,
+               DebugVertex{{ minX, maxY, minZ }, { top[0], top[1], top[2] }},
+               DebugVertex{{ maxX, maxY, minZ }, { top[0], top[1], top[2] }},
+               DebugVertex{{ maxX, maxY, maxZ }, { top[0], top[1], top[2] }},
+               DebugVertex{{ minX, maxY, maxZ }, { top[0], top[1], top[2] }});
+    appendFace(vertices, indices,
+               DebugVertex{{ minX, minY, minZ }, { dark[0], dark[1], dark[2] }},
+               DebugVertex{{ minX, minY, maxZ }, { dark[0], dark[1], dark[2] }},
+               DebugVertex{{ maxX, minY, maxZ }, { dark[0], dark[1], dark[2] }},
+               DebugVertex{{ maxX, minY, minZ }, { dark[0], dark[1], dark[2] }});
+    appendFace(vertices, indices,
+               DebugVertex{{ minX, minY, minZ }, { side[0], side[1], side[2] }},
+               DebugVertex{{ maxX, minY, minZ }, { side[0], side[1], side[2] }},
+               DebugVertex{{ maxX, maxY, minZ }, { side[0], side[1], side[2] }},
+               DebugVertex{{ minX, maxY, minZ }, { side[0], side[1], side[2] }});
+    appendFace(vertices, indices,
+               DebugVertex{{ maxX, minY, minZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ maxX, minY, maxZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ maxX, maxY, maxZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ maxX, maxY, minZ }, { color[0], color[1], color[2] }});
+    appendFace(vertices, indices,
+               DebugVertex{{ minX, minY, maxZ }, { side[0], side[1], side[2] }},
+               DebugVertex{{ minX, minY, minZ }, { side[0], side[1], side[2] }},
+               DebugVertex{{ minX, maxY, minZ }, { side[0], side[1], side[2] }},
+               DebugVertex{{ minX, maxY, maxZ }, { side[0], side[1], side[2] }});
+    appendFace(vertices, indices,
+               DebugVertex{{ maxX, minY, maxZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ minX, minY, maxZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ minX, maxY, maxZ }, { color[0], color[1], color[2] }},
+               DebugVertex{{ maxX, maxY, maxZ }, { color[0], color[1], color[2] }});
+}
+
 const std::array<uint8_t, 7>& glyphRows(char c) {
     static constexpr std::array<uint8_t, 7> kA = { 0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 };
+    static constexpr std::array<uint8_t, 7> kB = { 0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110 };
     static constexpr std::array<uint8_t, 7> kD = { 0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110 };
     static constexpr std::array<uint8_t, 7> kF = { 0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000 };
     static constexpr std::array<uint8_t, 7> kG = { 0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110 };
@@ -81,6 +141,7 @@ const std::array<uint8_t, 7>& glyphRows(char c) {
 
     switch (c) {
         case 'A': return kA;
+        case 'B': return kB;
         case 'D': return kD;
         case 'F': return kF;
         case 'G': return kG;
@@ -198,28 +259,54 @@ void appendOverlayLabel(std::vector<DebugVertex>& vertices,
 void buildDebugOrientationSquare(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
     vertices.clear();
     indices.clear();
-    vertices.reserve(512);
-    indices.reserve(768);
+    vertices.reserve(768);
+    indices.reserve(1152);
 
-    // 6x6 orientation square on the XZ plane. These colors are intentionally
-    // diagnostic, not final art: they make camera orbit/zoom direction obvious.
-    appendQuad(vertices, indices, -3.0F, 0.0F, 3.0F, 6.0F, 0.0F, { 0.075F, 0.082F, 0.092F });
-    appendQuad(vertices, indices, -3.0F, 0.0F, -1.0F, 6.0F, 0.012F, { 0.02F, 0.12F, 0.55F }); // SOL
-    appendQuad(vertices, indices, 1.0F, 0.0F, 3.0F, 6.0F, 0.014F, { 0.70F, 0.48F, 0.03F });  // SAG
-    appendQuad(vertices, indices, -1.0F, 4.0F, 1.0F, 6.0F, 0.016F, { 0.42F, 0.06F, 0.62F }); // UST
-    appendQuad(vertices, indices, -1.0F, 0.0F, 1.0F, 2.0F, 0.018F, { 0.03F, 0.38F, 0.09F }); // ALT
-    appendQuad(vertices, indices, -1.0F, 2.0F, 1.0F, 4.0F, 0.020F, { 0.13F, 0.14F, 0.16F }); // center
+    // First real 3D debug scene: a long road plane, lane markers and a simple
+    // placeholder bus mesh made from colored cuboids. This is still programmer
+    // art, but it verifies the mesh/depth/camera path with recognizable game
+    // objects instead of orientation-only test geometry.
+    appendQuad(vertices, indices, -7.5F, -2.0F, 7.5F, 15.0F, -0.035F, { 0.015F, 0.055F, 0.022F }); // ground/grass
+    appendQuad(vertices, indices, -2.55F, -2.0F, 2.55F, 15.0F, 0.0F, { 0.075F, 0.080F, 0.086F });   // asphalt
+    appendQuad(vertices, indices, -2.70F, -2.0F, -2.55F, 15.0F, 0.012F, { 0.78F, 0.82F, 0.88F });
+    appendQuad(vertices, indices, 2.55F, -2.0F, 2.70F, 15.0F, 0.012F, { 0.78F, 0.82F, 0.88F });
 
-    // Thin bright separators so the square reads as zones even on small phones.
-    appendQuad(vertices, indices, -1.03F, 0.0F, -0.97F, 6.0F, 0.030F, { 0.78F, 0.84F, 0.92F });
-    appendQuad(vertices, indices, 0.97F, 0.0F, 1.03F, 6.0F, 0.030F, { 0.78F, 0.84F, 0.92F });
-    appendQuad(vertices, indices, -3.0F, 1.97F, 3.0F, 2.03F, 0.030F, { 0.78F, 0.84F, 0.92F });
-    appendQuad(vertices, indices, -3.0F, 3.97F, 3.0F, 4.03F, 0.030F, { 0.78F, 0.84F, 0.92F });
+    for (int segment = 0; segment < 7; ++segment) {
+        const float z0 = -1.4F + (static_cast<float>(segment) * 2.25F);
+        appendQuad(vertices, indices, -0.08F, z0, 0.08F, z0 + 1.05F, 0.018F, { 0.96F, 0.92F, 0.72F });
+    }
 
-    appendLabel(vertices, indices, "SOL", -2.0F, 3.0F, 0.105F, { 1.0F, 1.0F, 1.0F });
-    appendLabel(vertices, indices, "SAG", 2.0F, 3.0F, 0.105F, { 0.05F, 0.04F, 0.02F });
-    appendLabel(vertices, indices, "UST", 0.0F, 5.0F, 0.105F, { 1.0F, 1.0F, 1.0F });
-    appendLabel(vertices, indices, "ALT", 0.0F, 1.0F, 0.105F, { 1.0F, 1.0F, 1.0F });
+    // A small lane label helps confirm that this is now a road/debug scene.
+    appendLabel(vertices, indices, "BUS", 0.0F, 6.35F, 0.135F, { 1.0F, 1.0F, 1.0F });
+
+    // Placeholder bus body.
+    appendBox(vertices, indices, -0.82F, 0.12F, 2.65F, 0.82F, 0.82F, 4.75F, { 0.95F, 0.46F, 0.08F });
+    appendBox(vertices, indices, -0.70F, 0.82F, 2.90F, 0.70F, 1.05F, 4.40F, { 0.88F, 0.38F, 0.06F }); // roof/cabin cap
+
+    // Windows as slightly raised dark-blue panels on sides/front.
+    appendFace(vertices, indices,
+               DebugVertex{{ -0.835F, 0.48F, 2.88F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ -0.835F, 0.48F, 4.44F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ -0.835F, 0.75F, 4.44F }, { 0.08F, 0.24F, 0.36F }},
+               DebugVertex{{ -0.835F, 0.75F, 2.88F }, { 0.08F, 0.24F, 0.36F }});
+    appendFace(vertices, indices,
+               DebugVertex{{ 0.835F, 0.48F, 4.44F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.835F, 0.48F, 2.88F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.835F, 0.75F, 2.88F }, { 0.08F, 0.24F, 0.36F }},
+               DebugVertex{{ 0.835F, 0.75F, 4.44F }, { 0.08F, 0.24F, 0.36F }});
+    appendFace(vertices, indices,
+               DebugVertex{{ -0.55F, 0.47F, 2.635F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.55F, 0.47F, 2.635F }, { 0.05F, 0.14F, 0.22F }},
+               DebugVertex{{ 0.55F, 0.76F, 2.635F }, { 0.08F, 0.24F, 0.36F }},
+               DebugVertex{{ -0.55F, 0.76F, 2.635F }, { 0.08F, 0.24F, 0.36F }});
+
+    // Wheels and simple headlights.
+    appendBox(vertices, indices, -0.95F, 0.02F, 2.95F, -0.72F, 0.32F, 3.35F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, -0.95F, 0.02F, 4.05F, -0.72F, 0.32F, 4.45F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, 0.72F, 0.02F, 2.95F, 0.95F, 0.32F, 3.35F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, 0.72F, 0.02F, 4.05F, 0.95F, 0.32F, 4.45F, { 0.015F, 0.015F, 0.018F });
+    appendBox(vertices, indices, -0.48F, 0.24F, 2.58F, -0.22F, 0.36F, 2.64F, { 1.0F, 0.92F, 0.35F });
+    appendBox(vertices, indices, 0.22F, 0.24F, 2.58F, 0.48F, 0.36F, 2.64F, { 1.0F, 0.92F, 0.35F });
 }
 
 const char* vkResultName(VkResult result) {
@@ -645,7 +732,7 @@ bool VulkanRenderer::createDebugMeshResources() {
     vkUnmapMemory(device_, debugIndexBuffer_.memory);
 
     debugIndexCount_ = static_cast<uint32_t>(indices.size());
-    RF_LOGI("Debug orientation square resources created: vertices=%zu indices=%u", vertices.size(), debugIndexCount_);
+    RF_LOGI("Debug bus road scene resources created: vertices=%zu indices=%u", vertices.size(), debugIndexCount_);
     return true;
 }
 
