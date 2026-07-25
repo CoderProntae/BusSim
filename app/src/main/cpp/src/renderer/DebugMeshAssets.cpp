@@ -154,17 +154,49 @@ void applyTransformToVertices(std::vector<DebugVertex>& vertices, std::size_t fi
 }
 
 void appendRoadSurfaceMesh(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
-    appendQuad(vertices, indices, -7.5F, -2.0F, 7.5F, 15.0F, -0.035F, { 0.015F, 0.055F, 0.022F });
-    appendQuad(vertices, indices, -2.55F, -2.0F, 2.55F, 15.0F, 0.0F, { 0.075F, 0.080F, 0.086F });
-    appendQuad(vertices, indices, -2.70F, -2.0F, -2.55F, 15.0F, 0.012F, { 0.78F, 0.82F, 0.88F });
-    appendQuad(vertices, indices, 2.55F, -2.0F, 2.70F, 15.0F, 0.012F, { 0.78F, 0.82F, 0.88F });
+    // Phase 2.5 test track: still simple procedural debug geometry, but now
+    // long enough to drive, with a cross segment, terminal/service pad and edge
+    // markers. Collision/navigation data will be introduced later; this is the
+    // visual track scaffold for the kinematic driving slice.
+    appendQuad(vertices, indices, -18.0F, -10.0F, 18.0F, 86.0F, -0.045F, { 0.016F, 0.060F, 0.026F }); // ground/grass
 
-    for (int segment = 0; segment < 7; ++segment) {
-        const float z0 = -1.4F + (static_cast<float>(segment) * 2.25F);
-        appendQuad(vertices, indices, -0.08F, z0, 0.08F, z0 + 1.05F, 0.018F, { 0.96F, 0.92F, 0.72F });
+    // Main road and cross-road.
+    appendQuad(vertices, indices, -2.75F, -8.0F, 2.75F, 82.0F, 0.0F, { 0.070F, 0.074F, 0.082F });
+    appendQuad(vertices, indices, -14.0F, 25.0F, 14.0F, 30.4F, 0.002F, { 0.068F, 0.072F, 0.080F });
+    appendQuad(vertices, indices, 6.0F, 36.0F, 15.0F, 49.0F, 0.003F, { 0.060F, 0.064F, 0.072F }); // terminal/service pad
+
+    // Road edge lines.
+    appendQuad(vertices, indices, -2.96F, -8.0F, -2.78F, 82.0F, 0.016F, { 0.78F, 0.82F, 0.88F });
+    appendQuad(vertices, indices, 2.78F, -8.0F, 2.96F, 82.0F, 0.016F, { 0.78F, 0.82F, 0.88F });
+    appendQuad(vertices, indices, -14.0F, 24.78F, 14.0F, 24.96F, 0.017F, { 0.78F, 0.82F, 0.88F });
+    appendQuad(vertices, indices, -14.0F, 30.44F, 14.0F, 30.62F, 0.017F, { 0.78F, 0.82F, 0.88F });
+
+    // Dashed lane markers along the main road and cross-road.
+    for (int segment = 0; segment < 34; ++segment) {
+        const float z0 = -6.8F + (static_cast<float>(segment) * 2.55F);
+        appendQuad(vertices, indices, -0.075F, z0, 0.075F, z0 + 1.18F, 0.022F, { 0.96F, 0.92F, 0.72F });
+    }
+    for (int segment = 0; segment < 10; ++segment) {
+        const float x0 = -12.5F + (static_cast<float>(segment) * 2.55F);
+        appendQuad(vertices, indices, x0, 27.62F, x0 + 1.15F, 27.78F, 0.023F, { 0.96F, 0.92F, 0.72F });
     }
 
+    // Start zone and terminal marker text.
     appendLabel(vertices, indices, "BUS", 0.0F, 6.35F, 0.135F, { 1.0F, 1.0F, 1.0F });
+    appendLabel(vertices, indices, "BUS", 10.5F, 42.0F, 0.150F, { 1.0F, 0.92F, 0.35F });
+
+    // Low curb/marker blocks at intervals so motion is easier to perceive.
+    for (int marker = 0; marker < 16; ++marker) {
+        const float z = -4.0F + (static_cast<float>(marker) * 5.0F);
+        appendBox(vertices, indices, -3.55F, 0.0F, z, -3.18F, 0.22F, z + 0.55F, { 0.82F, 0.12F, 0.10F });
+        appendBox(vertices, indices, 3.18F, 0.0F, z + 2.15F, 3.55F, 0.22F, z + 2.70F, { 0.82F, 0.82F, 0.16F });
+    }
+
+    // Terminal pad parking guide.
+    appendQuad(vertices, indices, 7.0F, 38.0F, 14.0F, 38.18F, 0.025F, { 0.30F, 0.55F, 1.0F });
+    appendQuad(vertices, indices, 7.0F, 46.8F, 14.0F, 46.98F, 0.025F, { 0.30F, 0.55F, 1.0F });
+    appendQuad(vertices, indices, 7.0F, 38.0F, 7.18F, 47.0F, 0.025F, { 0.30F, 0.55F, 1.0F });
+    appendQuad(vertices, indices, 13.82F, 38.0F, 14.0F, 47.0F, 0.025F, { 0.30F, 0.55F, 1.0F });
 }
 
 void appendBusPlaceholderMesh(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {

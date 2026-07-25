@@ -93,7 +93,8 @@ Beklenen davranış:
     ├── 28_FAZ2_VEHICLE_STATE_MODEL.md
     ├── 29_FAZ2_KINEMATIC_BUS.md
     ├── 30_FAZ2_MULTITOUCH_DRIVING_INPUT.md
-    └── 31_FAZ2_CAMERA_MODES.md
+    ├── 31_FAZ2_CAMERA_MODES.md
+    └── 32_FAZ2_TEST_TRACK.md
 ```
 
 ## Bilgisayarsız APK test akışı
@@ -127,11 +128,11 @@ Gerekli paketler:
 
 ## Sonraki adım
 
-Faz 0 gerçek cihazda onaylandı. Faz 1 kapanışa alındı. Faz 2 başladı. Kinematik placeholder otobüs hareketi, çoklu dokunmalı sürüş input bölgeleri ve takip/kabin kamera prototipi eklendi. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi; World → Render proxy köprüsü başladı, renderer debug sahnesi proxy listesinden dinamik üretiliyor, debug mesh asset verisi renderer ana dosyasından ayrıldı ve Faz 1 kapanış temizliği yapıldı. Sıradaki parçalar:
+Faz 0 gerçek cihazda onaylandı. Faz 1 kapanışa alındı. Faz 2 başladı. Kinematik placeholder otobüs hareketi, çoklu dokunmalı sürüş input bölgeleri, takip/kabin kamera prototipi ve basit test pisti eklendi. Faz 1 için eklenen parçalar: `SimulationClock`, temel `Vec` math yardımcıları, native input action/axis sınırı, frame stats altyapısı, renderer debug timing/input bağlantısı, shader tabanlı Vulkan çizim, ilk vertex/index buffer debug mesh, görünür input debug geri bildirimi, depth buffer, perspektif kamera/MVP hattı, Transform/Quat, frustum culling math temeli, ilk Vulkan resource RAII katmanı ve minimal World/ECS iskeleti, ilk debug kamera controller bağlantısı, yön etiketli orientation square diagnostic mesh ve ayrıştırılmış kamera inputu ve ilk görsel debug overlay/frame stats yüzeyi ve overlay geçici olarak kapalı, debug kamera sabit, placeholder otobüs ve basit 3D yol sahnesi eklendi; World → Render proxy köprüsü başladı, renderer debug sahnesi proxy listesinden dinamik üretiliyor, debug mesh asset verisi renderer ana dosyasından ayrıldı ve Faz 1 kapanış temizliği yapıldı. Sıradaki parçalar:
 
-1. Faz 2.5 Test pisti / yol segmentleri.
-2. Faz 2.6 Fizik backend adapter tasarımı.
-3. Faz 2.7 Raycast teker/süspansiyon prototipi.
+1. Faz 2.6 Fizik backend adapter tasarımı.
+2. Faz 2.7 Raycast teker/süspansiyon prototipi.
+3. Faz 2.8 Motor/şanzıman/fren modeli başlangıcı.
 3. Asset/mesh veri formatı hazırlığı.
 4. Renderer resource abstraction katmanını pipeline/descriptor tarafına genişletmek.
 5. Input action mapping'i gerçek sürüş HUD'una hazırlamak.
