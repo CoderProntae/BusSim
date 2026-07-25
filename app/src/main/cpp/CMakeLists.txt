@@ -63,6 +63,7 @@ add_library(roadforge SHARED
     src/core/Log.cpp
     src/core/SimulationClock.cpp
     src/engine/Engine.cpp
+    src/game/GameSimulation.cpp
     src/input/InputSystem.cpp
     src/physics/NullPhysicsWorld.cpp
     src/physics/RaycastVehicleBackend.cpp

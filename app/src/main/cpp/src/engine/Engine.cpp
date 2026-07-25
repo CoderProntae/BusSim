@@ -38,6 +38,7 @@ void Engine::onSurfaceCreated(ANativeWindow* window) {
     surfaceHeight_ = std::max(1, ANativeWindow_getHeight(window_));
     inputSystem_.setSurfaceSize(surfaceWidth_, surfaceHeight_);
     inputSystem_.reset();
+    gameSimulation_.resetNewGame();
     world_.reset();
     world_.createDebugRoadEntity();
     vehicleController_.reset();
@@ -155,6 +156,7 @@ void Engine::frame(int64_t frameTimeNanos) {
         physicsWorld_.step(simulationStep.fixedDeltaSeconds);
         vehicleController_.overrideState(vehicleState);
         vehicleEventCollector_.update(vehicleController_.state());
+        gameSimulation_.fixedUpdate(simulationStep.fixedDeltaSeconds, vehicleController_.state());
         for (const vehicle::VehicleEvent& event : vehicleEventCollector_.events()) {
             RF_LOGI("VehicleEvent type=%u value=%.2f odometer=%.1f trip=%.1f",
                     static_cast<unsigned>(event.type),
@@ -194,6 +196,15 @@ void Engine::frame(int64_t frameTimeNanos) {
                 drivingTelemetry.fuel01 * 100.0F,
                 drivingTelemetry.damage01 * 100.0F,
                 drivingTelemetry.offRoad ? 1 : 0);
+        const game::GameSnapshot& gameSnapshot = gameSimulation_.snapshot();
+        RF_LOGI("GameSim tripState=%u progress=%.3f passengers=%u cash=%.2f reputation=%.2f weather=%u traffic=%.2f",
+                static_cast<unsigned>(gameSnapshot.activeTrip.state),
+                gameSnapshot.activeTrip.progress01,
+                gameSnapshot.activeTrip.passengerCount,
+                static_cast<double>(gameSnapshot.company.cashCents) / 100.0,
+                gameSnapshot.company.reputation01,
+                static_cast<unsigned>(gameSnapshot.weather.kind),
+                gameSnapshot.traffic.density01);
     }
 
     world_.collectRenderProxies(worldRenderProxies_);

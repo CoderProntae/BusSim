@@ -2,6 +2,7 @@
 
 #include "roadforge/core/FrameStats.hpp"
 #include "roadforge/core/SimulationClock.hpp"
+#include "roadforge/game/GameSimulation.hpp"
 #include "roadforge/input/InputSystem.hpp"
 #include "roadforge/physics/NullPhysicsWorld.hpp"
 #include "roadforge/physics/RaycastVehicleBackend.hpp"
@@ -45,6 +46,7 @@ private:
     core::SimulationClock simulationClock_;
     core::FrameStats frameStats_;
     input::InputSystem inputSystem_;
+    game::GameSimulation gameSimulation_;
     world::World world_;
     physics::NullPhysicsWorld physicsWorld_;
     physics::RaycastVehicleBackend vehiclePhysicsBackend_;
