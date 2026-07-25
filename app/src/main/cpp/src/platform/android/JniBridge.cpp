@@ -4,6 +4,7 @@
 #include <android/native_window_jni.h>
 #include <jni.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <new>
 
@@ -102,6 +103,39 @@ Java_com_roadforge_bussim_MainActivity_nativeTouch(JNIEnv* env, jclass clazz, jl
     if (engine != nullptr) {
         engine->onTouch(static_cast<int32_t>(action), x, y, static_cast<int32_t>(pointerCount));
     }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_roadforge_bussim_MainActivity_nativeTouchState(JNIEnv* env, jclass clazz, jlong handle, jint action, jint pointerCount, jfloatArray xs, jfloatArray ys) {
+    (void)clazz;
+    Engine* engine = fromHandle(handle);
+    if (engine == nullptr || xs == nullptr || ys == nullptr || pointerCount <= 0) {
+        return;
+    }
+
+    const jsize xCount = env->GetArrayLength(xs);
+    const jsize yCount = env->GetArrayLength(ys);
+    const jsize count = std::min(static_cast<jsize>(pointerCount), std::min(xCount, yCount));
+    if (count <= 0) {
+        return;
+    }
+
+    jfloat* xValues = env->GetFloatArrayElements(xs, nullptr);
+    jfloat* yValues = env->GetFloatArrayElements(ys, nullptr);
+    if (xValues == nullptr || yValues == nullptr) {
+        if (xValues != nullptr) {
+            env->ReleaseFloatArrayElements(xs, xValues, JNI_ABORT);
+        }
+        if (yValues != nullptr) {
+            env->ReleaseFloatArrayElements(ys, yValues, JNI_ABORT);
+        }
+        return;
+    }
+
+    engine->onTouchState(static_cast<int32_t>(action), static_cast<int32_t>(count), xValues, yValues);
+
+    env->ReleaseFloatArrayElements(xs, xValues, JNI_ABORT);
+    env->ReleaseFloatArrayElements(ys, yValues, JNI_ABORT);
 }
 
 extern "C" JNIEXPORT void JNICALL

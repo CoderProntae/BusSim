@@ -97,6 +97,21 @@ void Engine::onTouch(int32_t action, float x, float y, int32_t pointerCount) {
     renderer_.setInputDebug(input.steering, input.throttle, input.brake, input.primaryTouchDown);
 }
 
+
+void Engine::onTouchState(int32_t action, int32_t pointerCount, const float* xs, const float* ys) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    inputSystem_.handleTouchState(action, pointerCount, xs, ys);
+    const input::InputSnapshot& input = inputSystem_.snapshot();
+    RF_LOGD("TouchState action=%d pointers=%d steer=%.2f throttle=%.1f brake=%.1f",
+            action,
+            pointerCount,
+            input.steering,
+            input.throttle,
+            input.brake);
+    renderer_.setTouchPulse(0.22F);
+    renderer_.setInputDebug(input.steering, input.throttle, input.brake, input.primaryTouchDown);
+}
+
 void Engine::frame(int64_t frameTimeNanos) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (paused_ || !renderer_.isReady()) {

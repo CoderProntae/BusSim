@@ -31,6 +31,7 @@ public:
     void onPause();
     void onResume();
     void onTouch(int32_t action, float x, float y, int32_t pointerCount);
+    void onTouchState(int32_t action, int32_t pointerCount, const float* xs, const float* ys);
     void frame(int64_t frameTimeNanos);
 
 private:

@@ -112,11 +112,14 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
             return true;
         }
         final int action = event.getActionMasked();
-        final int pointerIndex = event.getActionIndex();
-        final float x = event.getX(pointerIndex);
-        final float y = event.getY(pointerIndex);
         final int pointerCount = event.getPointerCount();
-        nativeTouch(nativeHandle, action, x, y, pointerCount);
+        final float[] xs = new float[pointerCount];
+        final float[] ys = new float[pointerCount];
+        for (int i = 0; i < pointerCount; ++i) {
+            xs[i] = event.getX(i);
+            ys[i] = event.getY(i);
+        }
+        nativeTouchState(nativeHandle, action, pointerCount, xs, ys);
         return true;
     }
 
@@ -182,5 +185,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
     private static native void nativeOnPause(long handle);
     private static native void nativeOnResume(long handle);
     private static native void nativeTouch(long handle, int action, float x, float y, int pointerCount);
+    private static native void nativeTouchState(long handle, int action, int pointerCount, float[] xs, float[] ys);
     private static native void nativeFrame(long handle, long frameTimeNanos);
 }

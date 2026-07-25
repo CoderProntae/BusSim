@@ -31,8 +31,7 @@ VehicleCommand VehicleController::commandFromInput(const input::InputSnapshot& i
     command.throttle = input.primaryTouchDown ? std::clamp(input.throttle, 0.0F, 1.0F) : 0.0F;
     command.brake = input.primaryTouchDown ? std::clamp(input.brake, 0.0F, 1.0F) : 0.0F;
 
-    const bool pedalInputActive = command.throttle > 0.0F || command.brake > 0.0F;
-    command.steering = input.primaryTouchDown && !pedalInputActive ? std::clamp(input.steering, -1.0F, 1.0F) : 0.0F;
+    command.steering = input.primaryTouchDown ? std::clamp(input.steering, -1.0F, 1.0F) : 0.0F;
     command.retarder = 0.0F;
     command.handbrake = false;
     command.gearMode = GearMode::Drive;

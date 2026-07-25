@@ -27,6 +27,7 @@ public:
     void reset();
     void setSurfaceSize(int32_t width, int32_t height);
     void handleTouch(int32_t androidAction, float x, float y, int32_t pointerCount);
+    void handleTouchState(int32_t androidAction, int32_t pointerCount, const float* xs, const float* ys);
 
     [[nodiscard]] const InputSnapshot& snapshot() const { return snapshot_; }
 
@@ -34,6 +35,7 @@ private:
     [[nodiscard]] float normalizeX(float x) const;
     [[nodiscard]] float normalizeY(float y) const;
     void rebuildAxesFromTouch();
+    void rebuildAxesFromTouchState(int32_t pointerCount, const float* xs, const float* ys);
 
     int32_t surfaceWidth_ = 1;
     int32_t surfaceHeight_ = 1;
