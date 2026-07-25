@@ -256,16 +256,19 @@ void appendOverlayLabel(std::vector<DebugVertex>& vertices,
     }
 }
 
-void buildDebugOrientationSquare(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
-    vertices.clear();
-    indices.clear();
-    vertices.reserve(768);
-    indices.reserve(1152);
+void applyTransformToVertices(std::vector<DebugVertex>& vertices, size_t firstVertex, const math::Transform& transform) {
+    const math::Mat4 matrix = math::transformToMat4(transform);
+    for (size_t i = firstVertex; i < vertices.size(); ++i) {
+        const float x = vertices[i].position[0];
+        const float y = vertices[i].position[1];
+        const float z = vertices[i].position[2];
+        vertices[i].position[0] = (matrix.m[0] * x) + (matrix.m[4] * y) + (matrix.m[8] * z) + matrix.m[12];
+        vertices[i].position[1] = (matrix.m[1] * x) + (matrix.m[5] * y) + (matrix.m[9] * z) + matrix.m[13];
+        vertices[i].position[2] = (matrix.m[2] * x) + (matrix.m[6] * y) + (matrix.m[10] * z) + matrix.m[14];
+    }
+}
 
-    // First real 3D debug scene: a long road plane, lane markers and a simple
-    // placeholder bus mesh made from colored cuboids. This is still programmer
-    // art, but it verifies the mesh/depth/camera path with recognizable game
-    // objects instead of orientation-only test geometry.
+void appendRoadSurfaceMesh(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
     appendQuad(vertices, indices, -7.5F, -2.0F, 7.5F, 15.0F, -0.035F, { 0.015F, 0.055F, 0.022F }); // ground/grass
     appendQuad(vertices, indices, -2.55F, -2.0F, 2.55F, 15.0F, 0.0F, { 0.075F, 0.080F, 0.086F });   // asphalt
     appendQuad(vertices, indices, -2.70F, -2.0F, -2.55F, 15.0F, 0.012F, { 0.78F, 0.82F, 0.88F });
@@ -276,14 +279,13 @@ void buildDebugOrientationSquare(std::vector<DebugVertex>& vertices, std::vector
         appendQuad(vertices, indices, -0.08F, z0, 0.08F, z0 + 1.05F, 0.018F, { 0.96F, 0.92F, 0.72F });
     }
 
-    // A small lane label helps confirm that this is now a road/debug scene.
     appendLabel(vertices, indices, "BUS", 0.0F, 6.35F, 0.135F, { 1.0F, 1.0F, 1.0F });
+}
 
-    // Placeholder bus body.
+void appendBusPlaceholderMesh(std::vector<DebugVertex>& vertices, std::vector<uint16_t>& indices) {
     appendBox(vertices, indices, -0.82F, 0.12F, 2.65F, 0.82F, 0.82F, 4.75F, { 0.95F, 0.46F, 0.08F });
-    appendBox(vertices, indices, -0.70F, 0.82F, 2.90F, 0.70F, 1.05F, 4.40F, { 0.88F, 0.38F, 0.06F }); // roof/cabin cap
+    appendBox(vertices, indices, -0.70F, 0.82F, 2.90F, 0.70F, 1.05F, 4.40F, { 0.88F, 0.38F, 0.06F });
 
-    // Windows as slightly raised dark-blue panels on sides/front.
     appendFace(vertices, indices,
                DebugVertex{{ -0.835F, 0.48F, 2.88F }, { 0.05F, 0.14F, 0.22F }},
                DebugVertex{{ -0.835F, 0.48F, 4.44F }, { 0.05F, 0.14F, 0.22F }},
@@ -300,13 +302,49 @@ void buildDebugOrientationSquare(std::vector<DebugVertex>& vertices, std::vector
                DebugVertex{{ 0.55F, 0.76F, 2.635F }, { 0.08F, 0.24F, 0.36F }},
                DebugVertex{{ -0.55F, 0.76F, 2.635F }, { 0.08F, 0.24F, 0.36F }});
 
-    // Wheels and simple headlights.
     appendBox(vertices, indices, -0.95F, 0.02F, 2.95F, -0.72F, 0.32F, 3.35F, { 0.015F, 0.015F, 0.018F });
     appendBox(vertices, indices, -0.95F, 0.02F, 4.05F, -0.72F, 0.32F, 4.45F, { 0.015F, 0.015F, 0.018F });
     appendBox(vertices, indices, 0.72F, 0.02F, 2.95F, 0.95F, 0.32F, 3.35F, { 0.015F, 0.015F, 0.018F });
     appendBox(vertices, indices, 0.72F, 0.02F, 4.05F, 0.95F, 0.32F, 4.45F, { 0.015F, 0.015F, 0.018F });
     appendBox(vertices, indices, -0.48F, 0.24F, 2.58F, -0.22F, 0.36F, 2.64F, { 1.0F, 0.92F, 0.35F });
     appendBox(vertices, indices, 0.22F, 0.24F, 2.58F, 0.48F, 0.36F, 2.64F, { 1.0F, 0.92F, 0.35F });
+}
+
+void buildDebugSceneFromProxies(const std::vector<DebugRenderProxy>& proxies,
+                                std::vector<DebugVertex>& vertices,
+                                std::vector<uint16_t>& indices) {
+    vertices.clear();
+    indices.clear();
+    vertices.reserve(1024);
+    indices.reserve(1536);
+
+    if (proxies.empty()) {
+        math::Transform identityTransform{};
+        size_t first = vertices.size();
+        appendRoadSurfaceMesh(vertices, indices);
+        applyTransformToVertices(vertices, first, identityTransform);
+        first = vertices.size();
+        appendBusPlaceholderMesh(vertices, indices);
+        applyTransformToVertices(vertices, first, identityTransform);
+        return;
+    }
+
+    for (const DebugRenderProxy& proxy : proxies) {
+        if (!proxy.visible) {
+            continue;
+        }
+
+        const size_t firstVertex = vertices.size();
+        switch (proxy.meshKind) {
+            case DebugMeshKind::RoadSurface:
+                appendRoadSurfaceMesh(vertices, indices);
+                break;
+            case DebugMeshKind::BusPlaceholder:
+                appendBusPlaceholderMesh(vertices, indices);
+                break;
+        }
+        applyTransformToVertices(vertices, firstVertex, proxy.transform);
+    }
 }
 
 const char* vkResultName(VkResult result) {
@@ -700,43 +738,26 @@ bool VulkanRenderer::createLogicalDevice() {
 }
 
 bool VulkanRenderer::createDebugMeshResources() {
-    std::vector<DebugVertex> vertices;
-    std::vector<uint16_t> indices;
-    buildDebugOrientationSquare(vertices, indices);
+    constexpr VkDeviceSize kSceneVertexBufferSize = sizeof(DebugVertex) * 4096U;
+    constexpr VkDeviceSize kSceneIndexBufferSize = sizeof(uint16_t) * 6144U;
 
-    const VkDeviceSize vertexBufferSize = sizeof(DebugVertex) * vertices.size();
-    const VkDeviceSize indexBufferSize = sizeof(uint16_t) * indices.size();
-
-    if (!createBuffer(vertexBufferSize,
-                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      debugVertexBuffer_)) {
-        return false;
+    for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
+        if (!createBuffer(kSceneVertexBufferSize,
+                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                          debugSceneVertexBuffers_[frame])) {
+            return false;
+        }
+        if (!createBuffer(kSceneIndexBufferSize,
+                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                          debugSceneIndexBuffers_[frame])) {
+            return false;
+        }
+        debugSceneIndexCounts_[frame] = 0;
     }
 
-    void* vertexData = nullptr;
-    if (!checkResult(vkMapMemory(device_, debugVertexBuffer_.memory, 0, vertexBufferSize, 0, &vertexData), "vkMapMemory(vertex)")) {
-        return false;
-    }
-    std::memcpy(vertexData, vertices.data(), static_cast<size_t>(vertexBufferSize));
-    vkUnmapMemory(device_, debugVertexBuffer_.memory);
-
-    if (!createBuffer(indexBufferSize,
-                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      debugIndexBuffer_)) {
-        return false;
-    }
-
-    void* indexData = nullptr;
-    if (!checkResult(vkMapMemory(device_, debugIndexBuffer_.memory, 0, indexBufferSize, 0, &indexData), "vkMapMemory(index)")) {
-        return false;
-    }
-    std::memcpy(indexData, indices.data(), static_cast<size_t>(indexBufferSize));
-    vkUnmapMemory(device_, debugIndexBuffer_.memory);
-
-    debugIndexCount_ = static_cast<uint32_t>(indices.size());
-    RF_LOGI("Debug bus road scene resources created: vertices=%zu indices=%u", vertices.size(), debugIndexCount_);
+    RF_LOGI("Dynamic debug scene resources created for %u frames", kMaxFramesInFlight);
     return true;
 }
 
@@ -1167,10 +1188,13 @@ bool VulkanRenderer::createSyncObjects() {
 }
 
 void VulkanRenderer::cleanupDebugMeshResources() {
-    debugIndexBuffer_.destroy();
-    debugVertexBuffer_.destroy();
-    debugIndexCount_ = 0;
+    for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
+        debugSceneIndexBuffers_[frame].destroy();
+        debugSceneVertexBuffers_[frame].destroy();
+        debugSceneIndexCounts_[frame] = 0;
+    }
 }
+
 
 void VulkanRenderer::cleanupDebugOverlayResources() {
     for (uint32_t frame = 0; frame < kMaxFramesInFlight; ++frame) {
@@ -1250,6 +1274,45 @@ bool VulkanRenderer::recreateSwapchain() {
         && createRenderPass()
         && createGraphicsPipeline()
         && createFramebuffers();
+}
+
+bool VulkanRenderer::updateDebugSceneBuffers(uint32_t frameIndex) {
+    if (frameIndex >= kMaxFramesInFlight || !debugSceneVertexBuffers_[frameIndex].valid() || !debugSceneIndexBuffers_[frameIndex].valid()) {
+        return false;
+    }
+
+    std::vector<DebugVertex> vertices;
+    std::vector<uint16_t> indices;
+    buildDebugSceneFromProxies(debugRenderProxies_, vertices, indices);
+
+    const VkDeviceSize vertexBytes = sizeof(DebugVertex) * vertices.size();
+    const VkDeviceSize indexBytes = sizeof(uint16_t) * indices.size();
+    if (vertexBytes == 0 || indexBytes == 0) {
+        debugSceneIndexCounts_[frameIndex] = 0;
+        return true;
+    }
+
+    if (vertexBytes > debugSceneVertexBuffers_[frameIndex].size || indexBytes > debugSceneIndexBuffers_[frameIndex].size) {
+        RF_LOGE("Debug scene buffer overflow: vertexBytes=%llu indexBytes=%llu", static_cast<unsigned long long>(vertexBytes), static_cast<unsigned long long>(indexBytes));
+        return false;
+    }
+
+    void* vertexData = nullptr;
+    if (!checkResult(vkMapMemory(device_, debugSceneVertexBuffers_[frameIndex].memory, 0, vertexBytes, 0, &vertexData), "vkMapMemory(debug scene vertex)")) {
+        return false;
+    }
+    std::memcpy(vertexData, vertices.data(), static_cast<size_t>(vertexBytes));
+    vkUnmapMemory(device_, debugSceneVertexBuffers_[frameIndex].memory);
+
+    void* indexData = nullptr;
+    if (!checkResult(vkMapMemory(device_, debugSceneIndexBuffers_[frameIndex].memory, 0, indexBytes, 0, &indexData), "vkMapMemory(debug scene index)")) {
+        return false;
+    }
+    std::memcpy(indexData, indices.data(), static_cast<size_t>(indexBytes));
+    vkUnmapMemory(device_, debugSceneIndexBuffers_[frameIndex].memory);
+
+    debugSceneIndexCounts_[frameIndex] = static_cast<uint32_t>(indices.size());
+    return true;
 }
 
 bool VulkanRenderer::updateDebugOverlayBuffers(uint32_t frameIndex) {
@@ -1378,24 +1441,24 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    if (graphicsPipeline_ != VK_NULL_HANDLE && debugVertexBuffer_.valid() && debugIndexBuffer_.valid()) {
-        const VkBuffer vertexBuffers[] = { debugVertexBuffer_.buffer };
+    if (graphicsPipeline_ != VK_NULL_HANDLE
+        && updateDebugSceneBuffers(currentFrame_)
+        && debugSceneIndexCounts_[currentFrame_] > 0) {
+        const VkBuffer vertexBuffers[] = { debugSceneVertexBuffers_[currentFrame_].buffer };
         const VkDeviceSize offsets[] = { 0 };
         const float aspect = swapchainExtent_.height > 0
             ? static_cast<float>(swapchainExtent_.width) / static_cast<float>(swapchainExtent_.height)
             : 1.0F;
         const math::Mat4 projection = math::perspectiveVulkanLH(debugCameraFovYRadians_, aspect, 0.1F, 100.0F);
         const math::Mat4 view = math::lookAtLH(debugCameraEye_, debugCameraTarget_, debugCameraUp_);
-
-        const math::Mat4 model = math::transformToMat4(debugRoadTransform_);
         const math::Mat4 viewProjection = math::multiply(projection, view);
         const math::Frustum frustum = math::extractFrustum(viewProjection);
-        const bool roadVisible = math::sphereInsideFrustum(frustum, {0.0F, 0.0F, 3.0F}, 1000.0F);
-        const math::Mat4 mvp = math::multiply(viewProjection, model);
-        PushConstants pushConstants{};
-        std::memcpy(pushConstants.mvp, mvp.data(), sizeof(pushConstants.mvp));
+        const bool sceneVisible = math::sphereInsideFrustum(frustum, {0.0F, 0.0F, 4.0F}, 1000.0F);
 
-        if (!roadVisible) {
+        PushConstants pushConstants{};
+        std::memcpy(pushConstants.mvp, viewProjection.data(), sizeof(pushConstants.mvp));
+
+        if (!sceneVisible) {
             vkCmdEndRenderPass(commandBuffer);
             (void)checkResult(vkEndCommandBuffer(commandBuffer), "vkEndCommandBuffer");
             return;
@@ -1404,8 +1467,8 @@ void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
         vkCmdPushConstants(commandBuffer, pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, debugIndexBuffer_.buffer, 0, VK_INDEX_TYPE_UINT16);
-        vkCmdDrawIndexed(commandBuffer, debugIndexCount_, 1, 0, 0, 0);
+        vkCmdBindIndexBuffer(commandBuffer, debugSceneIndexBuffers_[currentFrame_].buffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(commandBuffer, debugSceneIndexCounts_[currentFrame_], 1, 0, 0, 0);
     }
 
     // Temporarily disabled: the shared 3D pipeline is not a reliable place for

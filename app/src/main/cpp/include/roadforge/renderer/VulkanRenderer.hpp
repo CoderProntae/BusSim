@@ -80,6 +80,7 @@ private:
     void cleanupSwapchain();
     bool recreateSwapchain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    bool updateDebugSceneBuffers(uint32_t frameIndex);
     bool updateDebugOverlayBuffers(uint32_t frameIndex);
     [[nodiscard]] VkShaderModule createShaderModule(const uint8_t* code, size_t size) const;
     [[nodiscard]] bool createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, DeviceBuffer& output) const;
@@ -136,9 +137,9 @@ private:
     VkPipelineLayout pipelineLayout_ = VK_NULL_HANDLE;
     VkPipeline graphicsPipeline_ = VK_NULL_HANDLE;
     VkCommandPool commandPool_ = VK_NULL_HANDLE;
-    DeviceBuffer debugVertexBuffer_;
-    DeviceBuffer debugIndexBuffer_;
-    uint32_t debugIndexCount_ = 0;
+    std::array<DeviceBuffer, kMaxFramesInFlight> debugSceneVertexBuffers_;
+    std::array<DeviceBuffer, kMaxFramesInFlight> debugSceneIndexBuffers_;
+    std::array<uint32_t, kMaxFramesInFlight> debugSceneIndexCounts_{};
     std::array<DeviceBuffer, kMaxFramesInFlight> overlayVertexBuffers_;
     std::array<DeviceBuffer, kMaxFramesInFlight> overlayIndexBuffers_;
     std::array<uint32_t, kMaxFramesInFlight> overlayIndexCounts_{};
